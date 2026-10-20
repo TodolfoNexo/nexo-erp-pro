@@ -128,11 +128,22 @@ function nexoShowLogin(message = "") {
           style="width:100%;padding:13px;">Entrar</button>
         <p id="nexoLoginMessage" role="alert"
           style="color:#d94d50;margin-top:14px;">${message}</p>
-      </form>
+      </form> 
+      
+<button id="nexoForgotPassword" type="button"
+  style="margin-top:10px;background:transparent;border:0;
+  text-decoration:underline;cursor:pointer;">
+  Esqueci minha senha
+</button>
+
     </div>`;
 
   document.getElementById("nexoLoginForm")
     .addEventListener("submit", nexoHandleLogin);
+  
+document.getElementById("nexoForgotPassword")
+  .addEventListener("click", nexoHandleForgotPassword);
+
 }
 
 async function nexoHandleLogin(event) {
@@ -200,11 +211,53 @@ function nexoShowDashboard() {
   }
 }
 
+
 async function nexoStartAuth() {
   if (!nexoSupabase) {
     nexoShowLogin("A conexão com o banco não foi inicializada.");
     return;
   }
+
+  try {
+    const { data, error } = await nexoSupabase.auth.getSession();
+    if (error) throw error;
+
+    const isRecovery =
+      window.location.hash.includes("type=recovery") ||
+      window.location.search.includes("type=recovery");
+
+    if (isRecovery && data.session) {
+      nexoShowPasswordUpdate();
+      return;
+    }
+
+    if (data.session) {
+      const { data: member, error: memberError } =
+        await nexoSupabase.rpc("nexo_is_member");
+
+      if (memberError) throw memberError;
+
+      if (member === true) {
+        nexoShowDashboard();
+        return;
+      }
+
+      await nexoLogout();
+      nexoShowLogin("Usuário sem autorização para acessar o NEXO.");
+      return;
+    }
+
+    nexoShowLogin();
+  } catch (error) {
+    nexoShowLogin(
+      "Falha ao verificar o acesso. Confira a conexão e tente novamente."
+    );
+  }
+}
+
+nexoStartAuth();
+
+
 
 /* NEXO — tela de redefinição de senha */
 function nexoShowPasswordUpdate() {
@@ -285,5 +338,35 @@ function nexoShowPasswordUpdate() {
   }
 }
 
-nexoStartAuth();
 
+async function nexoHandleForgotPassword() {
+  if (!nexoSupabase) {
+    nexoShowLogin("Conexão com o Supabase indisponível.");
+    return;
+  }
+
+  const emailInput = document.getElementById("nexoEmail");
+  const email = emailInput.value.trim();
+
+  if (!email) {
+    nexoShowLogin("Digite seu e-mail para recuperar a senha.");
+    return;
+  }
+
+  try {
+    const { error } =
+      await nexoSupabase.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin + window.location.pathname
+      });
+
+    if (error) throw error;
+
+    nexoShowLogin(
+      "Se o e-mail estiver cadastrado, você receberá as instruções de recuperação."
+    );
+  } catch (error) {
+    nexoShowLogin(
+      "Não foi possível solicitar a recuperação agora. Tente novamente mais tarde."
+    );
+  }
+}
