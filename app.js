@@ -295,7 +295,18 @@ function render(view) {
 
 menuButton.addEventListener("click", () => {
   sidebar.classList.toggle("open");
-});  
+});
+
+document.addEventListener("click", event => {
+  if (
+    window.innerWidth <= 700 &&
+    sidebar.classList.contains("open") &&
+    !sidebar.contains(event.target) &&
+    !menuButton.contains(event.target)
+  ) {
+    sidebar.classList.remove("open");
+  }
+});
 async function carregarVendasNexo() {
   const area = document.getElementById("nexo-vendas-reais");
   if (!area) return;
