@@ -166,9 +166,9 @@ const views = {
   sales: ["Vendas", () => `
     <div class="section-head">
       <h2>Pedidos de venda</h2>
-      <button class="primary" onclick="demoAlert('Cadastro de vendas será implementado na próxima etapa.')">
-        + Novo pedido
-      </button>
+      <button class="primary" onclick="abrirFormularioVenda()">
+  + Novo pedido
+</button>
     </div>
     <div id="nexo-vendas-reais">
       <p>Carregando vendas...</p>
