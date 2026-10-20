@@ -283,7 +283,24 @@ const views = {
   `]
 };
 
+
 function render(view) {
+  const selected = views[view] || views.dashboard;
+
+  title.textContent = selected[0];
+  content.innerHTML = selected[1]();
+
+  document.querySelectorAll(".nav-item").forEach(button => {
+    button.classList.toggle("active", button.dataset.view === view);
+  });
+
+  sidebar.classList.remove("open");
+
+  if (view === "sales") {
+    carregarVendasNexo();
+  }
+}
+
    
 async function carregarVendasNexo() {
   const area = document.getElementById("nexo-vendas-reais");
@@ -361,25 +378,6 @@ async function carregarVendasNexo() {
   `;
 }
 
-  const selected = views[view] || views.dashboard;
-
-  title.textContent = selected[0];
-  content.innerHTML = selected[1]();
-
-  document.querySelectorAll(".nav-item").forEach(button => {
-    button.classList.toggle("active", button.dataset.view === view);
-  });
-
-  sidebar.classList.remove("open");
-}
-
-document.querySelectorAll(".nav-item").forEach(button => {
-  button.addEventListener("click", () => render(button.dataset.view));
-});
-
-menuButton.addEventListener("click", () => {
-  sidebar.classList.toggle("open");
-});
 
 /* ==========================================
    AUTENTICAÇÃO
