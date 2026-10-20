@@ -1108,6 +1108,7 @@ function abrirFormularioFinanceiro() {
   `;
 }
 
+
 async function salvarFinanceiroNexo(event) {
   event.preventDefault();
 
@@ -1116,8 +1117,8 @@ async function salvarFinanceiroNexo(event) {
 
   const descricao = String(dados.get("description") || "").trim();
   const valor = Number(dados.get("amount"));
-  const tipo = dados.get("type");
-  const status = dados.get("status");
+  const tipo = String(dados.get("type") || "");
+  const status = String(dados.get("status") || "");
 
   if (!descricao || !Number.isFinite(valor) || valor <= 0) {
     alert("Informe uma descrição e um valor válido.");
@@ -1144,7 +1145,7 @@ async function salvarFinanceiroNexo(event) {
 
   const lancamento = {
     description: descricao,
-    type: tipo,
+    entry_type: tipo,
     amount: valor,
     status: status,
     due_date: dados.get("due_date") || null,
@@ -1154,6 +1155,7 @@ async function salvarFinanceiroNexo(event) {
   };
 
   const botao = form.querySelector('button[type="submit"]');
+
   if (botao) {
     botao.disabled = true;
     botao.textContent = "Salvando...";
@@ -1163,21 +1165,22 @@ async function salvarFinanceiroNexo(event) {
     .from("nexo_finance")
     .insert(lancamento);
 
- if (error) {
-  console.error("Erro ao salvar lançamento:", error);
+  if (error) {
+    console.error("Erro ao salvar lançamento:", error);
 
-  alert(
-    "Erro ao salvar lançamento:\n" +
-    (error.message || JSON.stringify(error))
-  );
+    alert(
+      "Erro ao salvar lançamento:\n" +
+      error.message
+    );
 
-  if (botao) {
-    botao.disabled = false;
-    botao.textContent = "Salvar lançamento";
+    if (botao) {
+      botao.disabled = false;
+      botao.textContent = "Salvar lançamento";
+    }
+    return;
   }
-  return;
-} 
 
   alert("Lançamento financeiro salvo com sucesso!");
   await carregarFinanceiroNexo();
 }
+
