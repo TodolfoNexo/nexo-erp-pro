@@ -1151,7 +1151,7 @@ alert(
 
   const lancamento = {
     description: descricao,
-    entry_type: tipo,
+    entry_type: tipo === "Entrada" ? "receber" : "pagar",
     amount: valor,
     status: status,
     due_date: dados.get("due_date") || null,
