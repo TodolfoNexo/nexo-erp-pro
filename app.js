@@ -98,3 +98,138 @@ async function nexoLogout() {
   console.warn("NEXO: configure a URL e a chave pública do Supabase.");
 }
 
+/* NEXO ERP PRO — tela de login e controle de acesso */
+const nexoLoginBox = document.getElementById("viewContent");
+const nexoPageTitle = document.getElementById("pageTitle");
+const nexoSidebar = document.getElementById("sidebar");
+
+function nexoShowLogin(message = "") {
+  nexoSidebar.style.display = "none";
+  document.getElementById("menuButton").style.display = "none";
+  nexoPageTitle.textContent = "Acesso ao sistema";
+
+  nexoLoginBox.innerHTML = `
+    <div style="max-width:420px;margin:45px auto;padding:28px;
+      background:var(--panel,#fff);border:1px solid #333;
+      border-radius:16px;">
+      <h2 style="margin-top:0">NEXO ERP PRO</h2>
+      <p>Entre com seu usuário autorizado para continuar.</p>
+      <form id="nexoLoginForm">
+        <label for="nexoEmail">E-mail</label>
+        <input id="nexoEmail" type="email" required autocomplete="username"
+          style="display:block;width:100%;box-sizing:border-box;
+          padding:12px;margin:8px 0 16px;">
+        <label for="nexoPassword">Senha</label>
+        <input id="nexoPassword" type="password" required
+          autocomplete="current-password"
+          style="display:block;width:100%;box-sizing:border-box;
+          padding:12px;margin:8px 0 16px;">
+        <button id="nexoLoginButton" class="primary" type="submit"
+          style="width:100%;padding:13px;">Entrar</button>
+        <p id="nexoLoginMessage" role="alert"
+          style="color:#d94d50;margin-top:14px;">${message}</p>
+      </form>
+    </div>`;
+
+  document.getElementById("nexoLoginForm")
+    .addEventListener("submit", nexoHandleLogin);
+}
+
+async function nexoHandleLogin(event) {
+  event.preventDefault();
+
+  const email = document.getElementById("nexoEmail").value.trim();
+  const password = document.getElementById("nexoPassword").value;
+  const button = document.getElementById("nexoLoginButton");
+  const message = document.getElementById("nexoLoginMessage");
+
+  button.disabled = true;
+  button.textContent = "Verificando...";
+  message.textContent = "";
+
+  try {
+    await nexoLogin(email, password);
+
+    const { data: member, error: memberError } =
+      await nexoSupabase.rpc("nexo_is_member");
+
+    if (memberError) throw memberError;
+
+    if (member !== true) {
+      await nexoLogout();
+      throw new Error("Usuário sem autorização para acessar o NEXO.");
+    }
+
+    nexoShowDashboard();
+  } catch (error) {
+    message.textContent =
+      error.message || "Não foi possível entrar. Confira seus dados.";
+    button.disabled = false;
+    button.textContent = "Entrar";
+  }
+}
+
+function nexoShowDashboard() {
+  nexoSidebar.style.display = "";
+  document.getElementById("menuButton").style.display = "";
+
+  render("dashboard");
+
+  let logoutButton = document.getElementById("nexoLogoutButton");
+
+  if (!logoutButton) {
+    logoutButton = document.createElement("button");
+    logoutButton.id = "nexoLogoutButton";
+    logoutButton.textContent = "Sair";
+    logoutButton.className = "primary";
+    logoutButton.style.cssText =
+      "position:fixed;right:16px;top:12px;z-index:9999;padding:9px 16px;";
+    document.body.appendChild(logoutButton);
+
+    logoutButton.addEventListener("click", async () => {
+      logoutButton.disabled = true;
+      try {
+        await nexoLogout();
+        logoutButton.remove();
+        nexoShowLogin("Você saiu do sistema.");
+      } catch (error) {
+        alert("Não foi possível sair: " + error.message);
+        logoutButton.disabled = false;
+      }
+    });
+  }
+}
+
+async function nexoStartAuth() {
+  if (!nexoSupabase) {
+    nexoShowLogin("A conexão com o banco não foi inicializada.");
+    return;
+  }
+
+  nexoShowLogin();
+
+  try {
+    const { data, error } = await nexoSupabase.auth.getSession();
+    if (error) throw error;
+
+    if (data.session) {
+      const { data: member, error: memberError } =
+        await nexoSupabase.rpc("nexo_is_member");
+
+      if (memberError) throw memberError;
+
+      if (member === true) {
+        nexoShowDashboard();
+        return;
+      }
+
+      await nexoLogout();
+      nexoShowLogin("Usuário sem autorização para acessar o NEXO.");
+    }
+  } catch (error) {
+    nexoShowLogin("Falha ao verificar o acesso. Confira a conexão e tente novamente.");
+  }
+}
+
+nexoStartAuth();
+
