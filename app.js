@@ -25,12 +25,19 @@ const currency = value =>
   });
 
 const data = {
-  sales: [
-    ["#NX-0018", "Distribuidora Central", "R$ 1.240,00", "Pago"],
-    ["#NX-0017", "Bar do Parque", "R$ 680,00", "Pendente"],
-    ["#NX-0016", "Adega Avenida", "R$ 920,00", "Pago"],
-    ["#NX-0015", "Distribuidora União", "R$ 1.560,00", "Pago"]
-  ],
+  
+sales: ["Vendas", () => `
+  <div class="section-head">
+    <h2>Pedidos de venda</h2>
+    <button class="primary" onclick="demoAlert('Cadastro de vendas será implementado na próxima etapa.')">
+      + Novo pedido
+    </button>
+  </div>
+  <div id="nexo-vendas-reais">
+    <p>Carregando vendas...</p>
+  </div>
+`],
+
   flavors: [
     ["Coco", "#f2f2ee", "1.240 pacotes"],
     ["Melancia", "#d94d50", "980 pacotes"],
@@ -277,6 +284,83 @@ const views = {
 };
 
 function render(view) {
+   
+async function carregarVendasNexo() {
+  const area = document.getElementById("nexo-vendas-reais");
+  if (!area) return;
+
+  area.innerHTML = "<p>Carregando vendas...</p>";
+
+  const { data: vendas, error } = await supabase
+    .from("nexo_sales")
+    .select("id, customer_id, sale_date, status, total, notes, created_at")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    area.innerHTML =
+      '<div class="notice">Não foi possível carregar as vendas. Verifique as permissões do Supabase.</div>';
+    console.error("Erro ao carregar vendas:", error);
+    return;
+  }
+
+  if (!vendas || vendas.length === 0) {
+    area.innerHTML = "<p>Nenhuma venda cadastrada ainda.</p>";
+    return;
+  }
+
+  const { data: clientes, error: erroClientes } = await supabase
+    .from("nexo_customers")
+    .select("id, name");
+
+  if (erroClientes) {
+    console.error("Erro ao carregar clientes:", erroClientes);
+  }
+
+  const nomesClientes = Object.fromEntries(
+    (clientes || []).map(cliente => [cliente.id, cliente.name])
+  );
+
+  const moeda = valor =>
+    Number(valor || 0).toLocaleString("pt-BR", {
+      style: "currency",
+      currency: "BRL"
+    });
+
+  const escapar = valor =>
+    String(valor ?? "").replace(/[&<>"']/g, caractere => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#39;"
+    })[caractere]);
+
+  area.innerHTML = `
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>DATA</th>
+            <th>CLIENTE</th>
+            <th>VALOR</th>
+            <th>STATUS</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${vendas.map(venda => `
+            <tr>
+              <td>${escapar(venda.sale_date || venda.created_at?.slice(0, 10) || "-")}</td>
+              <td>${escapar(nomesClientes[venda.customer_id] || "Cliente não identificado")}</td>
+              <td>${escapar(moeda(venda.total))}</td>
+              <td>${escapar(venda.status || "Sem status")}</td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
   const selected = views[view] || views.dashboard;
 
   title.textContent = selected[0];
