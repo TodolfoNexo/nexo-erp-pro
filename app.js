@@ -1163,15 +1163,20 @@ async function salvarFinanceiroNexo(event) {
     .from("nexo_finance")
     .insert(lancamento);
 
-  if (error) {
-    console.error("Erro ao salvar lançamento:", error);
-    alert("Não foi possível salvar. Verifique a conexão e as permissões do Supabase.");
-    if (botao) {
-      botao.disabled = false;
-      botao.textContent = "Salvar lançamento";
-    }
-    return;
+ if (error) {
+  console.error("Erro ao salvar lançamento:", error);
+
+  alert(
+    "Erro ao salvar lançamento:\n" +
+    (error.message || JSON.stringify(error))
+  );
+
+  if (botao) {
+    botao.disabled = false;
+    botao.textContent = "Salvar lançamento";
   }
+  return;
+} 
 
   alert("Lançamento financeiro salvo com sucesso!");
   await carregarFinanceiroNexo();
