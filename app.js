@@ -269,11 +269,28 @@ customers: ["Clientes", () => `
 };
 
 
+
 function render(view) {
   const selected = views[view] || views.dashboard;
 
   title.textContent = selected[0];
   content.innerHTML = selected[1]();
+
+  document.querySelectorAll(".nav-item").forEach(button => {
+    button.classList.toggle("active", button.dataset.view === view);
+  });
+
+  sidebar.classList.remove("open");
+
+  if (view === "sales") {
+    carregarVendasNexo();
+  }
+
+  if (view === "customers") {
+    carregarClientesNexo();
+  }
+}
+
 
   document.querySelectorAll(".nav-item").forEach(button => {
     button.classList.toggle("active", button.dataset.view === view);
