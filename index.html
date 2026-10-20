@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#111111">
+  <title>NEXO ERP PRO</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <div class="brand"><span class="brand-mark">N</span><div><strong>NEXO</strong><small>ERP PRO</small></div></div>
+      <div class="nav-label">GESTÃO</div>
+      <button class="nav-item active" data-view="dashboard">▦ <span>Dashboard</span></button>
+      <button class="nav-item" data-view="sales">↗ <span>Vendas</span></button>
+      <button class="nav-item" data-view="production">▤ <span>Produção</span></button>
+      <button class="nav-item" data-view="stock">▣ <span>Estoque</span></button>
+      <button class="nav-item" data-view="finance">R$ <span>Financeiro</span></button>
+      <button class="nav-item" data-view="customers">♙ <span>Clientes</span></button>
+      <button class="nav-item" data-view="settings">⚙ <span>Configurações</span></button>
+      <div class="sidebar-bottom"><span class="status-dot"></span> Protótipo local<br><small>Banco online ainda não conectado</small></div>
+    </aside>
+    <main class="main">
+      <header class="topbar">
+        <button class="menu-button" id="menuButton" aria-label="Abrir menu">☰</button>
+        <div><div class="eyebrow">PAINEL DE CONTROLE</div><h1 id="pageTitle">Dashboard</h1></div>
+        <div class="top-actions"><span class="date" id="today"></span><div class="avatar">NX</div></div>
+      </header>
+      <section id="viewContent"></section>
+      <footer> NEXO ERP PRO <span>•</span> Primeira estrutura web demonstrativa</footer>
+    </main>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>
