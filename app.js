@@ -270,6 +270,7 @@ customers: ["Clientes", () => `
 
 
 
+
 function render(view) {
   const selected = views[view] || views.dashboard;
 
@@ -289,20 +290,20 @@ function render(view) {
   if (view === "customers") {
     carregarClientesNexo();
   }
+
+  if (view === "finance") {
+    carregarFinanceiroNexo();
+  }
 }
 
-if (view === "finance") {
-  carregarFinanceiroNexo();
-}
-
-
- document.querySelectorAll(".nav-item").forEach(button => {
+document.querySelectorAll(".nav-item").forEach(button => {
   button.addEventListener("click", () => render(button.dataset.view));
 });
 
 menuButton.addEventListener("click", () => {
   sidebar.classList.toggle("open");
 });
+
 
 document.addEventListener("click", event => {
   if (
