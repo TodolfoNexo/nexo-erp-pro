@@ -63,6 +63,36 @@ if (
     NEXO_SUPABASE_KEY
   );
 
+/* NEXO ERP PRO — autenticação */
+async function nexoLogin(email, password) {
+  if (!nexoSupabase) {
+    throw new Error("A conexão com o Supabase não foi inicializada.");
+  }
+
+  const { data, error } = await nexoSupabase.auth.signInWithPassword({
+    email,
+    password
+  });
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
+}
+
+async function nexoLogout() {
+  if (!nexoSupabase) {
+    throw new Error("A conexão com o Supabase não foi inicializada.");
+  }
+
+  const { error } = await nexoSupabase.auth.signOut();
+
+  if (error) {
+    throw error;
+  }
+}
+
   console.info("NEXO: cliente Supabase inicializado.");
 } else {
   console.warn("NEXO: configure a URL e a chave pública do Supabase.");
