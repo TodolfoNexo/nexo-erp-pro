@@ -927,6 +927,36 @@ async function carregarFinanceiroNexo() {
     return;
   }
 
+  
+async function atualizarStatusFinanceiroNexo(select) {
+  const id = select.dataset.id;
+  const novoStatus = select.value;
+
+  select.disabled = true;
+
+  try {
+    const { error } = await nexoSupabase
+      .from("nexo_finance")
+      .update({ status: novoStatus })
+      .eq("id", id);
+
+    if (error) throw error;
+
+    alert("Status atualizado com sucesso!");
+
+    await carregarFinanceiroNexo();
+
+  } catch (error) {
+    console.error("Erro ao atualizar status:", error);
+    alert("Não foi possível atualizar o status: " + error.message);
+    await carregarFinanceiroNexo();
+
+  } finally {
+    select.disabled = false;
+  }
+}
+ 
+
   lista.innerHTML = "<p>Carregando lançamentos...</p>";
 
   const { data, error } = await nexoSupabase
@@ -1009,41 +1039,9 @@ async function carregarFinanceiroNexo() {
       "'": "&#39;"
     })[caractere]);
 
-  lista.innerHTML = `
-    <div class="panel">
-      <h3>Lançamentos financeiros</h3>
-      <div style="overflow-x:auto">
-        <table>
-          <thead>
-            <tr>
-              <th>Descrição</th>
-              <th>Tipo</th>
-              <th>Categoria</th>
-              <th>Vencimento</th>
-              <th>Status</th>
-              <th>Valor</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${lancamentos.map(item => `
-              <tr>
-                <td>${escapar(item.description)}</td>
-                <td>${escapar(
-  item.entry_type === "receber" ? "Entrada" : "Saída"
-)}</td>
-                <td>${escapar(item.category || "-")}</td>
-                <td>${item.due_date
-                  ? escapar(item.due_date.split("-").reverse().join("/"))
-                  : "-"}</td>
-                <td>${escapar(item.status)}</td>
-                <td>${moeda(item.amount)}</td>
-              </tr>
-            `).join("")}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  `;
+  <CodeBlock language="javascript" editable>
+lista.innerHTML = `
+`;
 }
 
 function abrirFormularioFinanceiro() {
