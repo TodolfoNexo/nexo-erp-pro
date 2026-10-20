@@ -950,21 +950,30 @@ async function carregarFinanceiroNexo() {
   const pendente = item => item.status === "Pendente";
   const pago = item => item.status === "Pago";
 
+
   const aReceber = lancamentos
-    .filter(item => item.type === "Entrada" && pendente(item))
+    .filter(item =>
+      item.entry_type === "receber" && pendente(item)
+    )
     .reduce((total, item) => total + Number(item.amount), 0);
 
   const aPagar = lancamentos
-    .filter(item => item.type === "Saída" && pendente(item))
+    .filter(item =>
+      item.entry_type === "pagar" && pendente(item)
+    )
     .reduce((total, item) => total + Number(item.amount), 0);
 
   const saldo = lancamentos.reduce((total, item) => {
     if (!pago(item)) return total;
-    return total + (item.type === "Entrada"
-      ? Number(item.amount)
-      : -Number(item.amount));
+
+    return total + (
+      item.entry_type === "receber"
+        ? Number(item.amount)
+        : -Number(item.amount)
+    );
   }, 0);
 
+   
   resumo.innerHTML = `
     <div class="metric">
       <div class="metric-head">A receber</div>
@@ -1018,7 +1027,9 @@ async function carregarFinanceiroNexo() {
             ${lancamentos.map(item => `
               <tr>
                 <td>${escapar(item.description)}</td>
-                <td>${escapar(item.type)}</td>
+                <td>${escapar(
+  item.entry_type === "receber" ? "Entrada" : "Saída"
+)}</td>
                 <td>${escapar(item.category || "-")}</td>
                 <td>${item.due_date
                   ? escapar(item.due_date.split("-").reverse().join("/"))
@@ -1194,4 +1205,5 @@ alert(
   alert("Lançamento financeiro salvo com sucesso!");
   await carregarFinanceiroNexo();
 }
+
 
