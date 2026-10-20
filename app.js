@@ -941,9 +941,7 @@ async function carregarFinanceiroNexo() {
   }
 
   const lancamentos = data || [];
-     console.log("Lançamentos financeiros:", lancamentos);
-  alert("Quantidade de lançamentos encontrados: " + lancamentos.length);
-   alert("Dados: " + JSON.stringify(lancamentos[0]));
+     console.log("Lançamentos financeiros:", lancamentos); 
   const moeda = valor =>
     Number(valor || 0).toLocaleString("pt-BR", {
       style: "currency",
@@ -1134,11 +1132,6 @@ async function salvarFinanceiroNexo(event) {
   const tipo = String(dados.get("type") || "");
   const status = String(dados.get("status") || "");
 
-alert(
-  "Descrição: " + descricao +
-  "\nTipo recebido: [" + tipo + "]" +
-  "\nStatus: [" + status + "]"
-);
    
   if (!descricao || !Number.isFinite(valor) || valor <= 0) {
     alert("Informe uma descrição e um valor válido.");
