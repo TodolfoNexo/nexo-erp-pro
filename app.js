@@ -817,6 +817,8 @@ async function carregarClientesNexo() {
   `;
 }
 
+window.abrirFormularioCliente = abrirFormularioCliente;
+window.salvarClienteNexo = salvarClienteNexo;
 
 function abrirFormularioCliente() {
   const area = document.getElementById("nexo-clientes-reais");
