@@ -927,36 +927,6 @@ async function carregarFinanceiroNexo() {
     return;
   }
 
-  
-async function atualizarStatusFinanceiroNexo(select) {
-  const id = select.dataset.id;
-  const novoStatus = select.value;
-
-  select.disabled = true;
-
-  try {
-    const { error } = await nexoSupabase
-      .from("nexo_finance")
-      .update({ status: novoStatus })
-      .eq("id", id);
-
-    if (error) throw error;
-
-    alert("Status atualizado com sucesso!");
-
-    await carregarFinanceiroNexo();
-
-  } catch (error) {
-    console.error("Erro ao atualizar status:", error);
-    alert("Não foi possível atualizar o status: " + error.message);
-    await carregarFinanceiroNexo();
-
-  } finally {
-    select.disabled = false;
-  }
-}
- 
-
   lista.innerHTML = "<p>Carregando lançamentos...</p>";
 
   const { data, error } = await nexoSupabase
@@ -1118,6 +1088,33 @@ function abrirFormularioFinanceiro() {
   `;
 }
 
+async function atualizarStatusFinanceiroNexo(select) {
+  const id = select.dataset.id;
+  const novoStatus = select.value;
+
+  select.disabled = true;
+
+  try {
+    const { error } = await nexoSupabase
+      .from("nexo_finance")
+      .update({ status: novoStatus })
+      .eq("id", id);
+
+    if (error) throw error;
+
+    alert("Status atualizado com sucesso!");
+
+    await carregarFinanceiroNexo();
+
+  } catch (error) {
+    console.error("Erro ao atualizar status:", error);
+    alert("Não foi possível atualizar o status: " + error.message);
+    await carregarFinanceiroNexo();
+
+  } finally {
+    select.disabled = false;
+  }
+}
 
 async function salvarFinanceiroNexo(event) {
   event.preventDefault();
