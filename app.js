@@ -206,6 +206,60 @@ async function nexoStartAuth() {
     return;
   }
 
+/* NEXO — tela de redefinição de senha */
+function nexoShowPasswordUpdate() {
+  const content = document.getElementById("viewContent");
+
+  document.getElementById("sidebar").style.display = "none";
+  document.getElementById("menuButton").style.display = "none";
+  document.getElementById("pageTitle").textContent = "Nova senha";
+
+  content.innerHTML = `
+    <div style="max-width:420px;margin:40px auto;padding:24px;
+      border:1px solid #444;border-radius:14px">
+      <h2>Definir nova senha</h2>
+      <p>Crie uma nova senha para acessar o NEXO ERP PRO.</p>
+      <form id="nexoPasswordUpdateForm">
+        <label for="nexoNewPassword">Nova senha</label>
+        <input id="nexoNewPassword" type="password"
+          minlength="8" autocomplete="new-password" required
+          style="display:block;box-sizing:border-box;width:100%;
+          padding:12px;margin:10px 0 16px">
+        <button class="primary" type="submit">Salvar nova senha</button>
+        <p id="nexoPasswordUpdateMessage" role="alert"></p>
+      </form>
+    </div>`;
+
+  document.getElementById("nexoPasswordUpdateForm")
+    .addEventListener("submit", async event => {
+      event.preventDefault();
+
+      const message =
+        document.getElementById("nexoPasswordUpdateMessage");
+      const password =
+        document.getElementById("nexoNewPassword").value;
+
+      message.textContent = "Salvando...";
+
+      try {
+        const { error } = await nexoSupabase.auth.updateUser({
+          password
+        });
+
+        if (error) throw error;
+
+        message.textContent =
+          "Senha atualizada! Entre novamente com sua nova senha.";
+
+        await nexoLogout();
+        nexoShowLogin("Senha alterada. Faça login novamente.");
+      } catch (error) {
+        message.textContent =
+          error.message || "Não foi possível atualizar a senha.";
+      }
+    });
+}
+
   nexoShowLogin();
 
   try {
