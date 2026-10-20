@@ -281,10 +281,13 @@ function render(view) {
 
   sidebar.classList.remove("open");
 
-  if (view === "sales") {
-    carregarVendasNexo();
-  }
+ if (view === "sales") {
+  carregarVendasNexo();
 }
+
+if (view === "customers") {
+  carregarClientesNexo();
+} 
 
  document.querySelectorAll(".nav-item").forEach(button => {
   button.addEventListener("click", () => render(button.dataset.view));
