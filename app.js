@@ -242,22 +242,19 @@ const views = {
     )}
   `],
 
-  customers: ["Clientes", () => `
-    <div class="section-head">
-      <h2>Clientes</h2>
-      <button class="primary" onclick="demoAlert('Cadastro real de clientes ainda não ativado.')">
-        + Novo cliente
-      </button>
-    </div>
-    ${table(
-      ["NOME", "PERFIL", "ÚLTIMO PEDIDO"],
-      [
-        ["Distribuidora Central", "Distribuidora", "#NX-0018"],
-        ["Bar do Parque", "Bar", "#NX-0017"],
-        ["Adega Avenida", "Adega", "#NX-0016"]
-      ]
-    )}
-  `],
+  
+customers: ["Clientes", () => `
+  <div class="section-head">
+    <h2>Clientes</h2>
+    <button class="primary" onclick="abrirFormularioCliente()">
+      + Novo cliente
+    </button>
+  </div>
+  <div id="nexo-clientes-reais">
+    <p>Carregando clientes...</p>
+  </div>
+`],
+
 
   settings: ["Configurações", () => `
     <div class="panel">
@@ -752,4 +749,63 @@ async function salvarVendaNexo(event) {
 
   alert("Venda cadastrada com sucesso!");
   await carregarVendasNexo();
+}
+
+
+async function carregarClientesNexo() {
+  const area = document.getElementById("nexo-clientes-reais");
+  if (!area) return;
+
+  area.innerHTML = "<p>Carregando clientes...</p>";
+
+  const { data: clientes, error } = await nexoSupabase
+    .from("nexo_customers")
+    .select("id, name, customer_type, phone, email")
+    .order("name", { ascending: true });
+
+  if (error) {
+    console.error("Erro ao carregar clientes:", error);
+    area.innerHTML =
+      '<div class="notice">Não foi possível carregar os clientes. Verifique as permissões do Supabase.</div>';
+    return;
+  }
+
+  if (!clientes || clientes.length === 0) {
+    area.innerHTML = "<p>Nenhum cliente cadastrado ainda.</p>";
+    return;
+  }
+
+  const escapar = valor =>
+    String(valor ?? "").replace(/[&<>"']/g, c => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#39;"
+    })[c]);
+
+  area.innerHTML = `
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>NOME</th>
+            <th>PERFIL</th>
+            <th>TELEFONE</th>
+            <th>E-MAIL</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${clientes.map(cliente => `
+            <tr>
+              <td>${escapar(cliente.name)}</td>
+              <td>${escapar(cliente.customer_type || "Não informado")}</td>
+              <td>${escapar(cliente.phone || "-")}</td>
+              <td>${escapar(cliente.email || "-")}</td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+    </div>
+  `;
 }
