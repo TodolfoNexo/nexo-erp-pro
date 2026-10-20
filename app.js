@@ -45,3 +45,26 @@ function render(view){const v=views[view]||views.dashboard;title.textContent=v[0
 document.querySelectorAll('.nav-item').forEach(b=>b.addEventListener('click',()=>render(b.dataset.view)));
 document.getElementById('menuButton').addEventListener('click',()=>document.getElementById('sidebar').classList.toggle('open'));
 render('dashboard');
+
+/* NEXO ERP PRO — conexão Supabase */
+const NEXO_SUPABASE_URL = "https://mgenzkzgwbodtwvauuun.supabase.co/rest/v1/";
+const NEXO_SUPABASE_KEY = "sb_publishable_USOpDTdOOMunKlyMHJx9sw_xfiSiyVd";
+
+let nexoSupabase = null;
+
+if (
+  window.supabase &&
+  NEXO_SUPABASE_URL.startsWith("https://") &&
+  NEXO_SUPABASE_KEY.length > 20 &&
+  !NEXO_SUPABASE_URL.includes("COLE_SUA")
+) {
+  nexoSupabase = window.supabase.createClient(
+    NEXO_SUPABASE_URL,
+    NEXO_SUPABASE_KEY
+  );
+
+  console.info("NEXO: cliente Supabase inicializado.");
+} else {
+  console.warn("NEXO: configure a URL e a chave pública do Supabase.");
+}
+
