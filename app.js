@@ -628,3 +628,128 @@ async function nexoStartAuth() {
 }
 
 nexoStartAuth();
+
+async function abrirFormularioVenda() {
+  const area = document.getElementById("nexo-vendas-reais");
+  if (!area) return;
+
+  area.innerHTML = "<p>Carregando clientes...</p>";
+
+  const { data: clientes, error } = await nexoSupabase
+    .from("nexo_customers")
+    .select("id, name")
+    .order("name");
+
+  if (error) {
+    console.error("Erro ao carregar clientes:", error);
+    area.innerHTML =
+      '<div class="notice">Não foi possível carregar os clientes.</div>';
+    return;
+  }
+
+  if (!clientes || clientes.length === 0) {
+    area.innerHTML = `
+      <div class="notice">
+        Cadastre um cliente antes de criar uma venda.
+      </div>
+      <button class="primary" onclick="carregarVendasNexo()">
+        Voltar para vendas
+      </button>
+    `;
+    return;
+  }
+
+  area.innerHTML = `
+    <div class="section-head">
+      <h2>Novo pedido de venda</h2>
+    </div>
+
+    <form id="form-nova-venda">
+      <label for="venda-cliente">Cliente</label>
+      <select id="venda-cliente" required>
+        <option value="">Selecione um cliente</option>
+        ${clientes.map(cliente => `
+          <option value="${String(cliente.id).replace(/&/g, "&amp;").replace(/"/g, "&quot;")}">
+            ${String(cliente.name || "").replace(/[&<>"']/g, c => ({
+              "&": "&amp;", "<": "&lt;", ">": "&gt;",
+              '"': "&quot;", "'": "&#39;"
+            })[c])}
+          </option>
+        `).join("")}
+      </select>
+
+      <label for="venda-data">Data da venda</label>
+      <input id="venda-data" type="date"
+        value="${new Date().toLocaleDateString("en-CA")}" required>
+
+      <label for="venda-valor">Valor total (R$)</label>
+      <input id="venda-valor" type="number"
+        min="0.01" step="0.01" placeholder="0,00" required>
+
+      <label for="venda-status">Status</label>
+      <select id="venda-status" required>
+        <option value="Pendente">Pendente</option>
+        <option value="Pago">Pago</option>
+        <option value="Cancelado">Cancelado</option>
+      </select>
+
+      <label for="venda-observacoes">Observações</label>
+      <textarea id="venda-observacoes"
+        placeholder="Observações do pedido"></textarea>
+
+      <button class="primary" type="submit">Salvar venda</button>
+      <button type="button" onclick="carregarVendasNexo()">
+        Cancelar
+      </button>
+
+      <p id="venda-mensagem" role="status"></p>
+    </form>
+  `;
+
+  document.getElementById("form-nova-venda")
+    .addEventListener("submit", salvarVendaNexo);
+}
+
+
+async function salvarVendaNexo(event) {
+  event.preventDefault();
+
+  const formulario = document.getElementById("form-nova-venda");
+  const mensagem = document.getElementById("venda-mensagem");
+  const botao = formulario.querySelector('button[type="submit"]');
+
+  const clienteId = document.getElementById("venda-cliente").value;
+  const dataVenda = document.getElementById("venda-data").value;
+  const valor = Number(document.getElementById("venda-valor").value);
+  const status = document.getElementById("venda-status").value;
+  const observacoes = document.getElementById("venda-observacoes").value.trim();
+
+  if (!clienteId || !dataVenda || !Number.isFinite(valor) || valor <= 0) {
+    mensagem.textContent = "Preencha os campos corretamente.";
+    return;
+  }
+
+  botao.disabled = true;
+  mensagem.textContent = "Salvando venda...";
+
+  const { error } = await nexoSupabase
+    .from("nexo_sales")
+    .insert({
+      customer_id: clienteId,
+      sale_date: dataVenda,
+      status: status,
+      total: valor,
+      notes: observacoes || null
+    });
+
+  if (error) {
+    console.error("Erro ao salvar venda:", error);
+    mensagem.textContent =
+      "Não foi possível salvar. Verifique as permissões do Supabase.";
+    botao.disabled = false;
+    return;
+  }
+
+  alert("Venda cadastrada com sucesso!");
+  await carregarVendasNexo();
+}
