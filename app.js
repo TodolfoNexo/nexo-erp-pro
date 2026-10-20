@@ -47,7 +47,7 @@ document.getElementById('menuButton').addEventListener('click',()=>document.getE
 render('dashboard');
 
 /* NEXO ERP PRO — conexão Supabase */
-const NEXO_SUPABASE_URL = "https://mgenzkzgwbodtwvauuun.supabase.co/rest/v1/";
+const NEXO_SUPABASE_URL = "https://mgenzkzgwbodtwvauuun.supabase.co";
 const NEXO_SUPABASE_KEY = "sb_publishable_USOpDTdOOMunKlyMHJx9sw_xfiSiyVd";
 
 let nexoSupabase = null;
