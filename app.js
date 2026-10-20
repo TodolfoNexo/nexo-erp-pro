@@ -1160,6 +1160,11 @@ alert(
     notes: String(dados.get("notes") || "").trim() || null
   };
 
+   alert(
+  "Dados enviados ao banco:\n" +
+  JSON.stringify(lancamento, null, 2)
+);
+
   const botao = form.querySelector('button[type="submit"]');
 
   if (botao) {
