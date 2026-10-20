@@ -816,3 +816,93 @@ async function carregarClientesNexo() {
     </div>
   `;
 }
+
+
+function abrirFormularioCliente() {
+  const area = document.getElementById("nexo-clientes-reais");
+
+  if (!area) {
+    alert("Não foi possível abrir o formulário de clientes.");
+    return;
+  }
+
+  area.insertAdjacentHTML("afterbegin", `
+    <form id="nexo-form-cliente" style="background:#222;padding:16px;border-radius:12px;margin-bottom:16px;color:white;">
+      <h3>Novo cliente</h3>
+
+      <label>Nome *</label>
+      <input name="name" required placeholder="Nome do cliente" style="display:block;width:100%;padding:12px;margin:8px 0 14px;box-sizing:border-box;">
+
+      <label>Tipo de cliente</label>
+      <select name="customer_type" style="display:block;width:100%;padding:12px;margin:8px 0 14px;">
+        <option value="Distribuidora">Distribuidora</option>
+        <option value="Comércio">Comércio</option>
+        <option value="Consumidor final">Consumidor final</option>
+        <option value="Outro">Outro</option>
+      </select>
+
+      <label>Telefone</label>
+      <input name="phone" placeholder="Telefone" style="display:block;width:100%;padding:12px;margin:8px 0 14px;box-sizing:border-box;">
+
+      <label>E-mail</label>
+      <input name="email" type="email" placeholder="E-mail" style="display:block;width:100%;padding:12px;margin:8px 0 14px;box-sizing:border-box;">
+
+      <label>Endereço</label>
+      <input name="address" placeholder="Endereço" style="display:block;width:100%;padding:12px;margin:8px 0 14px;box-sizing:border-box;">
+
+      <label>Observações</label>
+      <textarea name="notes" placeholder="Observações" style="display:block;width:100%;padding:12px;margin:8px 0 14px;box-sizing:border-box;"></textarea>
+
+      <button type="submit" style="padding:12px 18px;">Salvar cliente</button>
+      <button type="button" onclick="document.getElementById('nexo-form-cliente').remove()" style="padding:12px 18px;">Cancelar</button>
+      <p id="nexo-cliente-mensagem"></p>
+    </form>
+  `);
+
+  document.getElementById("nexo-form-cliente").addEventListener("submit", salvarClienteNexo);
+}
+
+async function salvarClienteNexo(event) {
+  event.preventDefault();
+
+  const form = event.currentTarget;
+  const mensagem = document.getElementById("nexo-cliente-mensagem");
+  const botao = form.querySelector('button[type="submit"]');
+
+  if (!nexoSupabase) {
+    mensagem.textContent = "Conexão com o banco de dados indisponível.";
+    return;
+  }
+
+  const dados = Object.fromEntries(new FormData(form).entries());
+
+  botao.disabled = true;
+  mensagem.textContent = "Salvando cliente...";
+
+  try {
+    const { data: sessaoData, error: sessaoErro } =
+      await nexoSupabase.auth.getSession();
+
+    if (sessaoErro) throw sessaoErro;
+
+    if (!sessaoData.session) {
+      throw new Error("Sua sessão expirou. Entre novamente no NEXO.");
+    }
+
+    const { error } = await nexoSupabase
+      .from("nexo_customers")
+      .insert([dados]);
+
+    if (error) throw error;
+
+    mensagem.textContent = "Cliente cadastrado com sucesso!";
+    form.reset();
+
+    await carregarClientesNexo();
+    form.remove();
+  } catch (erro) {
+    console.error("Erro ao salvar cliente:", erro);
+    mensagem.textContent = "Erro ao salvar: " + erro.message;
+    botao.disabled = false;
+  }
+}
