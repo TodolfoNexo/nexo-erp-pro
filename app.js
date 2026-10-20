@@ -26,19 +26,7 @@ const currency = value =>
 
 const data = {
   
-sales: ["Vendas", () => `
-  <div class="section-head">
-    <h2>Pedidos de venda</h2>
-    <button class="primary" onclick="demoAlert('Cadastro de vendas será implementado na próxima etapa.')">
-      + Novo pedido
-    </button>
-  </div>
-  <div id="nexo-vendas-reais">
-    <p>Carregando vendas...</p>
-  </div>
-`],
-
-  flavors: [
+ flavors: [
     ["Coco", "#f2f2ee", "1.240 pacotes"],
     ["Melancia", "#d94d50", "980 pacotes"],
     ["Morango", "#e98ca6", "860 pacotes"],
@@ -174,19 +162,19 @@ window.demoAlert = demoAlert;
 const views = {
   dashboard: ["Dashboard", dashboard],
 
+ 
   sales: ["Vendas", () => `
     <div class="section-head">
       <h2>Pedidos de venda</h2>
-      <button class="primary" onclick="demoAlert('Cadastro real ainda não ativado.')">
+      <button class="primary" onclick="demoAlert('Cadastro de vendas será implementado na próxima etapa.')">
         + Novo pedido
       </button>
     </div>
-    ${table(
-      ["PEDIDO", "CLIENTE", "VALOR", "STATUS"],
-      data.sales
-    )}
-    <div class="notice">Pedidos ilustrativos. O cadastro real ainda precisa ser implementado.</div>
+    <div id="nexo-vendas-reais">
+      <p>Carregando vendas...</p>
+    </div>
   `],
+
 
   production: ["Produção", () => `
     <div class="section-head">
@@ -301,14 +289,20 @@ function render(view) {
   }
 }
 
-   
+ document.querySelectorAll(".nav-item").forEach(button => {
+  button.addEventListener("click", () => render(button.dataset.view));
+});
+
+menuButton.addEventListener("click", () => {
+  sidebar.classList.toggle("open");
+});  
 async function carregarVendasNexo() {
   const area = document.getElementById("nexo-vendas-reais");
   if (!area) return;
 
   area.innerHTML = "<p>Carregando vendas...</p>";
 
-  const { data: vendas, error } = await supabase
+  const { data: vendas, error } = await nexoSupabase
     .from("nexo_sales")
     .select("id, customer_id, sale_date, status, total, notes, created_at")
     .order("created_at", { ascending: false });
@@ -325,7 +319,7 @@ async function carregarVendasNexo() {
     return;
   }
 
-  const { data: clientes, error: erroClientes } = await supabase
+  const { data: clientes, error: erroClientes } = await nexoSupabase
     .from("nexo_customers")
     .select("id, name");
 
