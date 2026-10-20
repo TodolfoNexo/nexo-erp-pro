@@ -1041,11 +1041,13 @@ function abrirFormularioFinanceiro() {
   lista.innerHTML = `
     <div class="panel">
       <h3>Novo lançamento financeiro</h3>
+      
 
       <form onsubmit="salvarFinanceiroNexo(event)">
         <label>Descrição</label>
         <input name="description" required maxlength="150"
           placeholder="Ex.: Compra de matéria-prima">
+
 
         <label>Tipo</label>
         <select name="type" required>
@@ -1053,9 +1055,11 @@ function abrirFormularioFinanceiro() {
           <option value="Saída">Saída</option>
         </select>
 
+
         <label>Valor (R$)</label>
         <input name="amount" type="number" min="0.01"
           step="0.01" required placeholder="0,00">
+
 
         <label>Status</label>
         <select name="status" required>
@@ -1064,11 +1068,13 @@ function abrirFormularioFinanceiro() {
           <option value="Cancelado">Cancelado</option>
         </select>
 
+
         <label>Data de vencimento</label>
         <input name="due_date" type="date">
 
         <label>Data de pagamento</label>
         <input name="payment_date" type="date">
+
 
         
 <label>Categoria</label>
@@ -1083,6 +1089,7 @@ function abrirFormularioFinanceiro() {
   <option value="Equipamentos">Equipamentos</option>
   <option value="Outros">Outros</option>
 </select>
+
 
           
         <label>Observações</label>
