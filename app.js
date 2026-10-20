@@ -908,3 +908,249 @@ async function salvarClienteNexo(event) {
     botao.disabled = false;
   }
 }
+
+window.abrirFormularioFinanceiro = abrirFormularioFinanceiro;
+window.salvarFinanceiroNexo = salvarFinanceiroNexo;
+
+async function carregarFinanceiroNexo() {
+  const resumo = document.getElementById("nexo-resumo-financeiro");
+  const lista = document.getElementById("nexo-lancamentos-financeiros");
+
+  if (!resumo || !lista) return;
+
+  if (!nexoSupabase) {
+    lista.innerHTML = "<p>Conexão com o banco indisponível.</p>";
+    return;
+  }
+
+  lista.innerHTML = "<p>Carregando lançamentos...</p>";
+
+  const { data, error } = await nexoSupabase
+    .from("nexo_finance")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("Erro ao carregar financeiro:", error);
+    lista.innerHTML = "<p>Não foi possível carregar os lançamentos financeiros.</p>";
+    return;
+  }
+
+  const lancamentos = data || [];
+  const moeda = valor =>
+    Number(valor || 0).toLocaleString("pt-BR", {
+      style: "currency",
+      currency: "BRL"
+    });
+
+  const pendente = item => item.status === "Pendente";
+  const pago = item => item.status === "Pago";
+
+  const aReceber = lancamentos
+    .filter(item => item.type === "Entrada" && pendente(item))
+    .reduce((total, item) => total + Number(item.amount), 0);
+
+  const aPagar = lancamentos
+    .filter(item => item.type === "Saída" && pendente(item))
+    .reduce((total, item) => total + Number(item.amount), 0);
+
+  const saldo = lancamentos.reduce((total, item) => {
+    if (!pago(item)) return total;
+    return total + (item.type === "Entrada"
+      ? Number(item.amount)
+      : -Number(item.amount));
+  }, 0);
+
+  resumo.innerHTML = `
+    <div class="metric">
+      <div class="metric-head">A receber</div>
+      <div class="metric-value">${moeda(aReceber)}</div>
+    </div>
+    <div class="metric">
+      <div class="metric-head">A pagar</div>
+      <div class="metric-value">${moeda(aPagar)}</div>
+    </div>
+    <div class="metric">
+      <div class="metric-head">Saldo realizado</div>
+      <div class="metric-value">${moeda(saldo)}</div>
+    </div>
+  `;
+
+  if (lancamentos.length === 0) {
+    lista.innerHTML = `
+      <div class="panel">
+        <p>Nenhum lançamento financeiro cadastrado.</p>
+        <p>Use “+ Novo lançamento” para começar.</p>
+      </div>
+    `;
+    return;
+  }
+
+  const escapar = valor =>
+    String(valor ?? "").replace(/[&<>"']/g, caractere => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#39;"
+    })[caractere]);
+
+  lista.innerHTML = `
+    <div class="panel">
+      <h3>Lançamentos financeiros</h3>
+      <div style="overflow-x:auto">
+        <table>
+          <thead>
+            <tr>
+              <th>Descrição</th>
+              <th>Tipo</th>
+              <th>Categoria</th>
+              <th>Vencimento</th>
+              <th>Status</th>
+              <th>Valor</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${lancamentos.map(item => `
+              <tr>
+                <td>${escapar(item.description)}</td>
+                <td>${escapar(item.type)}</td>
+                <td>${escapar(item.category || "-")}</td>
+                <td>${item.due_date
+                  ? escapar(item.due_date.split("-").reverse().join("/"))
+                  : "-"}</td>
+                <td>${escapar(item.status)}</td>
+                <td>${moeda(item.amount)}</td>
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+}
+
+function abrirFormularioFinanceiro() {
+  const lista = document.getElementById("nexo-lancamentos-financeiros");
+  if (!lista) return;
+
+  lista.innerHTML = `
+    <div class="panel">
+      <h3>Novo lançamento financeiro</h3>
+
+      <form onsubmit="salvarFinanceiroNexo(event)">
+        <label>Descrição</label>
+        <input name="description" required maxlength="150"
+          placeholder="Ex.: Compra de matéria-prima">
+
+        <label>Tipo</label>
+        <select name="type" required>
+          <option value="Entrada">Entrada</option>
+          <option value="Saída">Saída</option>
+        </select>
+
+        <label>Valor (R$)</label>
+        <input name="amount" type="number" min="0.01"
+          step="0.01" required placeholder="0,00">
+
+        <label>Status</label>
+        <select name="status" required>
+          <option value="Pendente">Pendente</option>
+          <option value="Pago">Pago</option>
+          <option value="Cancelado">Cancelado</option>
+        </select>
+
+        <label>Data de vencimento</label>
+        <input name="due_date" type="date">
+
+        <label>Data de pagamento</label>
+        <input name="payment_date" type="date">
+
+        <label>Categoria</label>
+        <input name="category" maxlength="80"
+          placeholder="Ex.: Vendas, energia, fornecedores">
+
+        <label>Observações</label>
+        <textarea name="notes" rows="3"></textarea>
+
+        <button class="primary" type="submit">
+          Salvar lançamento
+        </button>
+
+        <button type="button"
+          onclick="carregarFinanceiroNexo()">
+          Cancelar
+        </button>
+      </form>
+    </div>
+  `;
+}
+
+async function salvarFinanceiroNexo(event) {
+  event.preventDefault();
+
+  const form = event.target;
+  const dados = new FormData(form);
+
+  const descricao = String(dados.get("description") || "").trim();
+  const valor = Number(dados.get("amount"));
+  const tipo = dados.get("type");
+  const status = dados.get("status");
+
+  if (!descricao || !Number.isFinite(valor) || valor <= 0) {
+    alert("Informe uma descrição e um valor válido.");
+    return;
+  }
+
+  if (!nexoSupabase) {
+    alert("Conexão com o banco indisponível.");
+    return;
+  }
+
+  const { data: sessaoData, error: sessaoError } =
+    await nexoSupabase.auth.getSession();
+
+  if (sessaoError || !sessaoData.session) {
+    alert("Sua sessão expirou. Entre novamente no NEXO.");
+    return;
+  }
+
+  const dataPagamento = dados.get("payment_date") ||
+    (status === "Pago"
+      ? new Date().toLocaleDateString("en-CA")
+      : null);
+
+  const lancamento = {
+    description: descricao,
+    type: tipo,
+    amount: valor,
+    status: status,
+    due_date: dados.get("due_date") || null,
+    payment_date: dataPagamento,
+    category: String(dados.get("category") || "").trim() || null,
+    notes: String(dados.get("notes") || "").trim() || null
+  };
+
+  const botao = form.querySelector('button[type="submit"]');
+  if (botao) {
+    botao.disabled = true;
+    botao.textContent = "Salvando...";
+  }
+
+  const { error } = await nexoSupabase
+    .from("nexo_finance")
+    .insert(lancamento);
+
+  if (error) {
+    console.error("Erro ao salvar lançamento:", error);
+    alert("Não foi possível salvar. Verifique a conexão e as permissões do Supabase.");
+    if (botao) {
+      botao.disabled = false;
+      botao.textContent = "Salvar lançamento";
+    }
+    return;
+  }
+
+  alert("Lançamento financeiro salvo com sucesso!");
+  await carregarFinanceiroNexo();
+}
