@@ -292,19 +292,6 @@ function render(view) {
 }
 
 
-  document.querySelectorAll(".nav-item").forEach(button => {
-    button.classList.toggle("active", button.dataset.view === view);
-  });
-
-  sidebar.classList.remove("open");
-
- if (view === "sales") {
-  carregarVendasNexo();
-}
-}
-if (view === "customers") {
-  carregarClientesNexo();
-} 
 
  document.querySelectorAll(".nav-item").forEach(button => {
   button.addEventListener("click", () => render(button.dataset.view));
