@@ -943,7 +943,7 @@ async function carregarFinanceiroNexo() {
   const lancamentos = data || [];
      console.log("Lançamentos financeiros:", lancamentos);
   alert("Quantidade de lançamentos encontrados: " + lancamentos.length);
-   alert(JSON.stringify(lancamentos, null, 2));
+   alert("Dados: " + JSON.stringify(lancamentos[0]));
   const moeda = valor =>
     Number(valor || 0).toLocaleString("pt-BR", {
       style: "currency",
