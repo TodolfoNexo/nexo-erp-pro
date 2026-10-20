@@ -284,7 +284,7 @@ function render(view) {
  if (view === "sales") {
   carregarVendasNexo();
 }
-
+}
 if (view === "customers") {
   carregarClientesNexo();
 } 
