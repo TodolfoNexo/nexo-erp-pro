@@ -212,35 +212,35 @@ const views = {
     )}
   `],
 
-  finance: ["Financeiro", () => `
-    <div class="section-head">
-      <h2>Resumo financeiro</h2>
-      <button class="primary" onclick="demoAlert('Lançamentos reais ainda não ativados.')">
-        + Novo lançamento
-      </button>
+
+finance: ["Financeiro", () => `
+  <div class="section-head">
+    <h2>Fluxo de caixa</h2>
+    <button class="primary" onclick="abrirFormularioFinanceiro()">
+      + Novo lançamento
+    </button>
+  </div>
+
+  <div id="nexo-resumo-financeiro" class="grid">
+    <div class="metric">
+      <div class="metric-head">A receber</div>
+      <div class="metric-value">Carregando...</div>
     </div>
-    <div class="grid">
-      <div class="metric">
-        <div class="metric-head">A receber</div>
-        <div class="metric-value">R$ 6.320</div>
-      </div>
-      <div class="metric">
-        <div class="metric-head">A pagar</div>
-        <div class="metric-value">R$ 3.480</div>
-      </div>
-      <div class="metric">
-        <div class="metric-head">Saldo projetado</div>
-        <div class="metric-value">R$ 8.760</div>
-      </div>
+    <div class="metric">
+      <div class="metric-head">A pagar</div>
+      <div class="metric-value">Carregando...</div>
     </div>
-    ${table(
-      ["DATA", "DESCRIÇÃO", "TIPO", "VALOR"],
-      [
-        ["05/10/2026", "Pedido demonstrativo", "Entrada", "R$ 1.240,00"],
-        ["06/10/2026", "Compra de embalagens", "Saída", "R$ 460,00"]
-      ]
-    )}
-  `],
+    <div class="metric">
+      <div class="metric-head">Saldo realizado</div>
+      <div class="metric-value">Carregando...</div>
+    </div>
+  </div>
+
+  <div id="nexo-lancamentos-financeiros" class="panel">
+    <p>Carregando lançamentos financeiros...</p>
+  </div>
+`],
+
 
   
 customers: ["Clientes", () => `
@@ -291,6 +291,9 @@ function render(view) {
   }
 }
 
+if (view === "finance") {
+  carregarFinanceiroNexo();
+}
 
 
  document.querySelectorAll(".nav-item").forEach(button => {
