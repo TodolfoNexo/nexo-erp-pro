@@ -1009,10 +1009,54 @@ async function carregarFinanceiroNexo() {
       "'": "&#39;"
     })[caractere]);
 
-  <CodeBlock language="javascript" editable>
-lista.innerHTML = `
-`;
+
+  lista.innerHTML = `
+    <div class="panel">
+      <h3>Lançamentos financeiros</h3>
+      <div style="overflow-x:auto">
+        <table>
+          <thead>
+            <tr>
+              <th>Descrição</th>
+              <th>Tipo</th>
+              <th>Categoria</th>
+              <th>Vencimento</th>
+              <th>Status</th>
+              <th>Valor</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${lancamentos.map(item => `
+              <tr>
+                <td>${escapar(item.description)}</td>
+                <td>${escapar(
+                  item.entry_type === "receber" ? "Entrada" : "Saída"
+                )}</td>
+                <td>${escapar(item.category || "-")}</td>
+                <td>${item.due_date
+                  ? escapar(item.due_date.split("-").reverse().join("/"))
+                  : "-"}</td>
+                <td>
+                  <select
+                    class="nexo-status-financeiro"
+                    data-id="${escapar(item.id)}"
+                    onchange="atualizarStatusFinanceiroNexo(this)"
+                  >
+                    <option value="Pendente" ${item.status === "Pendente" ? "selected" : ""}>Pendente</option>
+                    <option value="Pago" ${item.status === "Pago" ? "selected" : ""}>Pago</option>
+                    <option value="Cancelado" ${item.status === "Cancelado" ? "selected" : ""}>Cancelado</option>
+                  </select>
+                </td>
+                <td>${moeda(item.amount)}</td>
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
 }
+
 
 function abrirFormularioFinanceiro() {
   const lista = document.getElementById("nexo-lancamentos-financeiros");
