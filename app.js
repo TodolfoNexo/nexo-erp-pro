@@ -1070,10 +1070,21 @@ function abrirFormularioFinanceiro() {
         <label>Data de pagamento</label>
         <input name="payment_date" type="date">
 
-        <label>Categoria</label>
-        <input name="category" maxlength="80"
-          placeholder="Ex.: Vendas, energia, fornecedores">
+        
+<label>Categoria</label>
+<select name="category" required>
+  <option value="">Selecione uma categoria</option>
+  <option value="Vendas">Vendas</option>
+  <option value="Fornecedores">Fornecedores</option>
+  <option value="Energia">Energia</option>
+  <option value="Aluguel">Aluguel</option>
+  <option value="Transporte">Transporte</option>
+  <option value="Impostos">Impostos</option>
+  <option value="Equipamentos">Equipamentos</option>
+  <option value="Outros">Outros</option>
+</select>
 
+          
         <label>Observações</label>
         <textarea name="notes" rows="3"></textarea>
 
