@@ -1270,6 +1270,7 @@ async function excluirFinanceiroNexo(id) {
   }
 }
 
+let idEmEdicaoFinanceiroNexo = null;
 
 async function salvarFinanceiroNexo(event) {
   event.preventDefault();
@@ -1282,7 +1283,6 @@ async function salvarFinanceiroNexo(event) {
   const tipo = String(dados.get("type") || "");
   const status = String(dados.get("status") || "");
 
-   
   if (!descricao || !Number.isFinite(valor) || valor <= 0) {
     alert("Informe uma descrição e um valor válido.");
     return;
@@ -1301,10 +1301,13 @@ async function salvarFinanceiroNexo(event) {
     return;
   }
 
-  const dataPagamento = dados.get("payment_date") ||
-    (status === "Pago"
-      ? new Date().toLocaleDateString("en-CA")
-      : null);
+  const dataPagamento =
+    status === "Pago"
+      ? (
+          dados.get("payment_date") ||
+          new Date().toLocaleDateString("en-CA")
+        )
+      : null;
 
   const lancamento = {
     description: descricao,
@@ -1317,11 +1320,6 @@ async function salvarFinanceiroNexo(event) {
     notes: String(dados.get("notes") || "").trim() || null
   };
 
-   alert(
-  "Dados enviados ao banco:\n" +
-  JSON.stringify(lancamento, null, 2)
-);
-
   const botao = form.querySelector('button[type="submit"]');
 
   if (botao) {
@@ -1329,27 +1327,51 @@ async function salvarFinanceiroNexo(event) {
     botao.textContent = "Salvando...";
   }
 
-  const { error } = await nexoSupabase
-    .from("nexo_finance")
-    .insert(lancamento);
+  try {
+    let error;
 
-  if (error) {
-    console.error("Erro ao salvar lançamento:", error);
+    if (idEmEdicaoFinanceiroNexo) {
+      const resultado = await nexoSupabase
+        .from("nexo_finance")
+        .update(lancamento)
+        .eq("id", idEmEdicaoFinanceiroNexo);
+
+      error = resultado.error;
+    } else {
+      const resultado = await nexoSupabase
+        .from("nexo_finance")
+        .insert(lancamento);
+
+      error = resultado.error;
+    }
+
+    if (error) throw error;
+
+    const estavaEditando = Boolean(idEmEdicaoFinanceiroNexo);
+
+    idEmEdicaoFinanceiroNexo = null;
 
     alert(
-      "Erro ao salvar lançamento:\n" +
-      error.message
+      estavaEditando
+        ? "Lançamento atualizado com sucesso!"
+        : "Lançamento financeiro salvo com sucesso!"
     );
+
+    await carregarFinanceiroNexo();
+
+  } catch (error) {
+    console.error("Erro ao salvar lançamento:", error);
+
+    alert("Erro ao salvar lançamento: " + error.message);
 
     if (botao) {
       botao.disabled = false;
-      botao.textContent = "Salvar lançamento";
+      botao.textContent = idEmEdicaoFinanceiroNexo
+        ? "Salvar alterações"
+        : "Salvar lançamento";
     }
-    return;
   }
-
-  alert("Lançamento financeiro salvo com sucesso!");
-  await carregarFinanceiroNexo();
 }
+
 
 
