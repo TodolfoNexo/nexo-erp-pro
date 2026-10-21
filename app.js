@@ -1020,9 +1020,10 @@ async function carregarFinanceiroNexo() {
               <th>Descrição</th>
               <th>Tipo</th>
               <th>Categoria</th>
-              <th>Vencimento</th>
-              <th>Status</th>
-              <th>Valor</th>
+               <th>Vencimento</th>
+                <th>Data de pagamento</th>
+                <th>Status</th>
+               <th>Valor</th>
             </tr>
           </thead>
           <tbody>
@@ -1032,12 +1033,16 @@ async function carregarFinanceiroNexo() {
                 <td>${escapar(
                   item.entry_type === "receber" ? "Entrada" : "Saída"
                 )}</td>
-                <td>${escapar(item.category || "-")}</td>
-                <td>${item.due_date
+                <td>${escapar(item.category || "-")}</td>                
+                 <td>${item.due_date
                   ? escapar(item.due_date.split("-").reverse().join("/"))
                   : "-"}</td>
-                <td>
+                   <td>${item.payment_date
+                  ? escapar(item.payment_date.split("-").reverse().join("/"))
+                  : "-"}</td>
+                  <td>
                   <select
+
                     class="nexo-status-financeiro"
                     data-id="${escapar(item.id)}"
                     onchange="atualizarStatusFinanceiroNexo(this)"
