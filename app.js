@@ -1132,6 +1132,7 @@ function abrirFormularioFinanceiro() {
   `;
 }
 
+
 async function atualizarStatusFinanceiroNexo(select) {
   const id = select.dataset.id;
   const novoStatus = select.value;
@@ -1139,26 +1140,34 @@ async function atualizarStatusFinanceiroNexo(select) {
   select.disabled = true;
 
   try {
+    const atualizacao = {
+      status: novoStatus,
+      payment_date: novoStatus === "Pago"
+        ? new Date().toLocaleDateString("en-CA")
+        : null
+    };
+
     const { error } = await nexoSupabase
       .from("nexo_finance")
-      .update({ status: novoStatus })
+      .update(atualizacao)
       .eq("id", id);
 
     if (error) throw error;
 
-    alert("Status atualizado com sucesso!");
+    alert("Status e data de pagamento atualizados com sucesso!");
 
     await carregarFinanceiroNexo();
 
   } catch (error) {
     console.error("Erro ao atualizar status:", error);
-    alert("Não foi possível atualizar o status: " + error.message);
+    alert("Não foi possível atualizar o lançamento: " + error.message);
     await carregarFinanceiroNexo();
 
   } finally {
     select.disabled = false;
   }
 }
+
 
 async function salvarFinanceiroNexo(event) {
   event.preventDefault();
