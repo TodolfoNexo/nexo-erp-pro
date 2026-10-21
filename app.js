@@ -916,6 +916,7 @@ async function salvarClienteNexo(event) {
 window.abrirFormularioFinanceiro = abrirFormularioFinanceiro;
 window.salvarFinanceiroNexo = salvarFinanceiroNexo;
 
+let filtroFinanceiroNexo = "todos";
 async function carregarFinanceiroNexo() {
   const resumo = document.getElementById("nexo-resumo-financeiro");
   const lista = document.getElementById("nexo-lancamentos-financeiros");
@@ -1010,9 +1011,20 @@ async function carregarFinanceiroNexo() {
     })[caractere]);
 
 
-  lista.innerHTML = `
+lista.innerHTML = `
     <div class="panel">
       <h3>Lançamentos financeiros</h3>
+
+      <label for="nexo-filtro-financeiro">Filtrar lançamentos</label>
+      <select id="nexo-filtro-financeiro"
+        onchange="alterarFiltroFinanceiroNexo(this.value)">
+        <option value="todos" ${filtroFinanceiroNexo === "todos" ? "selected" : ""}>Todos</option>
+        <option value="receber" ${filtroFinanceiroNexo === "receber" ? "selected" : ""}>A receber</option>
+        <option value="pagar" ${filtroFinanceiroNexo === "pagar" ? "selected" : ""}>A pagar</option>
+        <option value="Pendente" ${filtroFinanceiroNexo === "Pendente" ? "selected" : ""}>Pendentes</option>
+        <option value="Pago" ${filtroFinanceiroNexo === "Pago" ? "selected" : ""}>Pagos</option>
+        <option value="vencidos" ${filtroFinanceiroNexo === "vencidos" ? "selected" : ""}>Vencidos</option>
+      </select> 
       <div style="overflow-x:auto">
         <table>
           <thead>
@@ -1027,7 +1039,39 @@ async function carregarFinanceiroNexo() {
             </tr>
           </thead>
           </tbody>      
-          ${lancamentos.map(item => {
+          
+${lancamentos.filter(item => {
+              const agora = new Date();
+              const hoje =
+                agora.getFullYear() + "-" +
+                String(agora.getMonth() + 1).padStart(2, "0") + "-" +
+                String(agora.getDate()).padStart(2, "0");
+
+              if (filtroFinanceiroNexo === "receber") {
+                return item.entry_type === "receber";
+              }
+
+              if (filtroFinanceiroNexo === "pagar") {
+                return item.entry_type === "pagar";
+              }
+
+              if (filtroFinanceiroNexo === "Pendente") {
+                return item.status === "Pendente";
+              }
+
+              if (filtroFinanceiroNexo === "Pago") {
+                return item.status === "Pago";
+              }
+
+              if (filtroFinanceiroNexo === "vencidos") {
+                return item.status === "Pendente" &&
+                  item.due_date &&
+                  item.due_date < hoje;
+              }
+
+              return true;
+            }).map(item => {
+
               const vencido =
                 item.status === "Pendente" &&
                 item.due_date &&
@@ -1146,6 +1190,11 @@ function abrirFormularioFinanceiro() {
   `;
 }
 
+
+function alterarFiltroFinanceiroNexo(filtro) {
+  filtroFinanceiroNexo = filtro;
+  carregarFinanceiroNexo();
+}
 
 async function atualizarStatusFinanceiroNexo(select) {
   const id = select.dataset.id;
