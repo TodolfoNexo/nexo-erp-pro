@@ -1026,9 +1026,17 @@ async function carregarFinanceiroNexo() {
                <th>Valor</th>
             </tr>
           </thead>
-          <tbody>
-            ${lancamentos.map(item => `
-              <tr>
+          </tbody>      
+          ${lancamentos.map(item => {
+              const vencido =
+                item.status === "Pendente" &&
+                item.due_date &&
+                item.due_date < new Date().toLocaleDateString("en-CA");
+
+              return `
+              <tr style="${vencido ? 'background:#fff0f0;color:#b42318;' : ''}">
+
+              
                 <td>${escapar(item.description)}</td>
                 <td>${escapar(
                   item.entry_type === "receber" ? "Entrada" : "Saída"
@@ -1053,8 +1061,9 @@ async function carregarFinanceiroNexo() {
                   </select>
                 </td>
                 <td>${moeda(item.amount)}</td>
-              </tr>
-            `).join("")}
+              </tr>          
+              `;
+            }).join("")}
           </tbody>
         </table>
       </div>
