@@ -1204,6 +1204,52 @@ function abrirFormularioFinanceiro() {
 }
 
 
+async function editarFinanceiroNexo(id) {
+  try {
+    const { data, error } = await nexoSupabase
+      .from("nexo_finance")
+      .select("*")
+      .eq("id", id)
+      .single();
+
+    if (error) throw error;
+
+    idEmEdicaoFinanceiroNexo = data.id;
+
+    abrirFormularioFinanceiro();
+
+    const lista = document.getElementById(
+      "nexo-lancamentos-financeiros"
+    );
+
+    const form = lista.querySelector("form");
+
+    if (!form) {
+      throw new Error("Não foi possível abrir o formulário.");
+    }
+
+    form.elements.description.value = data.description || "";
+    form.elements.type.value =
+      data.entry_type === "receber" ? "Entrada" : "Saída";
+    form.elements.amount.value = data.amount ?? "";
+    form.elements.status.value = data.status || "Pendente";
+    form.elements.due_date.value = data.due_date || "";
+    form.elements.payment_date.value = data.payment_date || "";
+    form.elements.category.value = data.category || "";
+    form.elements.notes.value = data.notes || "";
+
+    const titulo = form.parentElement.querySelector("h3");
+    if (titulo) titulo.textContent = "Editar lançamento financeiro";
+
+    const botao = form.querySelector('button[type="submit"]');
+    if (botao) botao.textContent = "Salvar alterações";
+
+  } catch (error) {
+    console.error("Erro ao abrir lançamento para edição:", error);
+    alert("Não foi possível abrir o lançamento: " + error.message);
+  }
+}
+
 function alterarFiltroFinanceiroNexo(filtro) {
   filtroFinanceiroNexo = filtro;
   carregarFinanceiroNexo();
