@@ -1195,9 +1195,9 @@ function abrirFormularioFinanceiro() {
         </button>
 
         <button type="button"
-          onclick="carregarFinanceiroNexo()">
-          Cancelar
-        </button>
+         onclick="cancelarEdicaoFinanceiroNexo()">
+        Cancelar
+       </button>
       </form>
     </div>
   `;
@@ -1249,6 +1249,13 @@ async function editarFinanceiroNexo(id) {
     alert("Não foi possível abrir o lançamento: " + error.message);
   }
 }
+
+
+function cancelarEdicaoFinanceiroNexo() {
+  idEmEdicaoFinanceiroNexo = null;
+  carregarFinanceiroNexo();
+}
+
 
 function alterarFiltroFinanceiroNexo(filtro) {
   filtroFinanceiroNexo = filtro;
