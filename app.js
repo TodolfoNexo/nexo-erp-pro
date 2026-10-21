@@ -1036,6 +1036,7 @@ lista.innerHTML = `
                 <th>Data de pagamento</th>
                 <th>Status</th>
                <th>Valor</th>
+              <th>Ações</th>
             </tr>
           </thead>
           </tbody>      
@@ -1104,8 +1105,20 @@ ${lancamentos.filter(item => {
                     <option value="Cancelado" ${item.status === "Cancelado" ? "selected" : ""}>Cancelado</option>
                   </select>
                 </td>
-                <td>${moeda(item.amount)}</td>
-              </tr>          
+                 
+<td>${moeda(item.amount)}</td>
+<td>
+  <button type="button"
+    onclick="editarFinanceiroNexo('${escapar(item.id)}')">
+    Editar
+  </button>
+  <button type="button"
+    onclick="excluirFinanceiroNexo('${escapar(item.id)}')">
+    Excluir
+  </button>
+</td>
+</tr>
+       
               `;
             }).join("")}
           </tbody>
@@ -1228,6 +1241,32 @@ async function atualizarStatusFinanceiroNexo(select) {
 
   } finally {
     select.disabled = false;
+  }
+}
+
+
+async function excluirFinanceiroNexo(id) {
+  const confirmar = confirm(
+    "Tem certeza que deseja excluir este lançamento financeiro?"
+  );
+
+  if (!confirmar) return;
+
+  try {
+    const { error } = await nexoSupabase
+      .from("nexo_finance")
+      .delete()
+      .eq("id", id);
+
+    if (error) throw error;
+
+    alert("Lançamento excluído com sucesso!");
+
+    await carregarFinanceiroNexo();
+
+  } catch (error) {
+    console.error("Erro ao excluir lançamento:", error);
+    alert("Não foi possível excluir: " + error.message);
   }
 }
 
