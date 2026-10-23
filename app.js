@@ -177,23 +177,21 @@ const views = {
 
 
   production: ["Produção", () => `
-    <div class="section-head">
-      <h2>Produção por sabor</h2>
-      <button class="primary" onclick="demoAlert('Registro de produção ainda não ativado.')">
-        + Registrar produção
-      </button>
-    </div>
-    ${table(
-      ["SABOR", "PRODUZIDO HOJE", "UNIDADE"],
-      [
-        ["Coco", "240", "pacotes"],
-        ["Melancia", "320", "pacotes"],
-        ["Morango", "180", "pacotes"],
-        ["Maracujá", "200", "pacotes"],
-        ["Maçã verde", "160", "pacotes"]
-      ]
-    )}
-  `],
+  
+production: ["Produção", () => `
+  <div class="section-head">
+    <h2>Produção por sabor</h2>
+    <button class="primary"
+      onclick="abrirFormularioProducaoNexo()">
+      + Registrar produção
+    </button>
+  </div>
+
+  <div id="nexo-producao-real">
+    <p>Carregando produção...</p>
+  </div>
+`],
+
 
   
 stock: ["Estoque", () => `
