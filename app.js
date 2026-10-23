@@ -524,9 +524,13 @@ async function abrirFormularioMovimentacaoEstoqueNexo() {
             <option value="saida">Saída</option>
           </select>
 
-          <label>Quantidade (pacotes ou unidade cadastrada)</label>
-          <input name="quantity" type="number"
-            min="0.01" step="0.01" required>
+         <label>Quantidade de gelos individuais</label>
+<input name="quantity" type="number"
+  min="1" step="1" required>
+
+<p class="muted">
+  Cada unidade pesa 190 g. Um pacote comercial contém 50 unidades.
+</p>
 
           <label>Observações</label>
           <textarea name="notes" rows="3"
