@@ -300,14 +300,16 @@ function render(view) {
   carregarEstoqueNexo();
 }
 
+ 
   if (view === "finance") {
     carregarFinanceiroNexo();
   }
+
+  if (view === "production") {
+    carregarProducaoNexo();
+  }
 }
 
-   if (view === "production") {
-      carregarProducaoNexo();
-}
 
 
 document.querySelectorAll(".nav-item").forEach(button => {
