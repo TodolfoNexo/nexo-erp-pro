@@ -463,6 +463,81 @@ async function carregarEstoqueNexo() {
 }
 
 
+async function abrirFormularioMovimentacaoEstoqueNexo() {
+  const area = document.getElementById("nexo-estoque-real");
+  if (!area) return;
+
+  try {
+    const { data: produtos, error } = await nexoSupabase
+      .from("nexo_products")
+      .select("id, name, unit, current_stock")
+      .order("name", { ascending: true });
+
+    if (error) throw error;
+
+    if (!produtos || produtos.length === 0) {
+      alert("Cadastre um produto antes de movimentar o estoque.");
+      return;
+    }
+
+    const escapar = valor =>
+      String(valor ?? "").replace(/[&<>"']/g, caractere => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+      })[caractere]);
+
+    area.innerHTML = `
+      <div class="panel">
+        <h3>Movimentar estoque</h3>
+
+        <form onsubmit="salvarMovimentacaoEstoqueNexo(event)">
+          <label>Produto</label>
+          <select name="product_id" required>
+            <option value="">Selecione um produto</option>
+            ${produtos.map(produto => `
+              <option value="${escapar(produto.id)}">
+                ${escapar(produto.name)} — saldo:
+                ${escapar(produto.current_stock)} ${escapar(produto.unit || "")}
+              </option>
+            `).join("")}
+          </select>
+
+          <label>Tipo de movimentação</label>
+          <select name="movement_type" required>
+            <option value="entrada">Entrada</option>
+            <option value="saida">Saída</option>
+          </select>
+
+          <label>Quantidade (pacotes ou unidade cadastrada)</label>
+          <input name="quantity" type="number"
+            min="0.01" step="0.01" required>
+
+          <label>Observações</label>
+          <textarea name="notes" rows="3"
+            maxlength="500"
+            placeholder="Ex.: Produção do dia"></textarea>
+
+          <button class="primary" type="submit">
+            Registrar movimentação
+          </button>
+
+          <button type="button"
+            onclick="carregarEstoqueNexo()">
+            Cancelar
+          </button>
+        </form>
+      </div>
+    `;
+  } catch (error) {
+    console.error("Erro ao abrir movimentação:", error);
+    alert("Não foi possível abrir o formulário: " + error.message);
+  }
+}
+
+
 /* ==========================================
    AUTENTICAÇÃO
    ========================================== */
