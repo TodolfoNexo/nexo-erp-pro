@@ -436,6 +436,9 @@ async function carregarEstoqueNexo() {
         "'": "&#39;"
       })[caractere]);
 
+    const numero = valor =>
+      Number(valor || 0).toLocaleString("pt-BR");
+
     area.innerHTML = `
       <div class="table-wrap">
         <table class="data-table">
@@ -444,6 +447,8 @@ async function carregarEstoqueNexo() {
               <th>PRODUTO</th>
               <th>CATEGORIA</th>
               <th>ESTOQUE ATUAL</th>
+              <th>PACOTES COMPLETOS</th>
+              <th>UNIDADES RESTANTES</th>
               <th>ESTOQUE MÍNIMO</th>
               <th>STATUS</th>
             </tr>
@@ -454,12 +459,17 @@ async function carregarEstoqueNexo() {
               const minimo = Number(produto.minimum_stock || 0);
               const baixo = atual <= minimo;
 
+              const pacotes = Math.floor(atual / 50);
+              const restantes = atual % 50;
+
               return `
                 <tr>
                   <td>${escapar(produto.name)}</td>
                   <td>${escapar(produto.category || "-")}</td>
-                  <td>${escapar(atual)} ${escapar(produto.unit || "")}</td>
-                  <td>${escapar(minimo)} ${escapar(produto.unit || "")}</td>
+                  <td>${numero(atual)} unidades</td>
+                  <td>${numero(pacotes)}</td>
+                  <td>${numero(restantes)}</td>
+                  <td>${numero(minimo)} unidades</td>
                   <td>${baixo ? "Estoque baixo" : "Normal"}</td>
                 </tr>
               `;
@@ -470,10 +480,13 @@ async function carregarEstoqueNexo() {
     `;
   } catch (error) {
     console.error("Erro ao carregar estoque:", error);
+
     area.innerHTML =
       '<div class="notice">Não foi possível carregar o estoque. Verifique as permissões do Supabase.</div>';
   }
 }
+
+
 
 
 async function abrirFormularioMovimentacaoEstoqueNexo() {
