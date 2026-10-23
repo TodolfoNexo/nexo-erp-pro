@@ -1778,3 +1778,84 @@ async function salvarProdutoNexo(event) {
 }
 
 
+async function abrirFormularioProducaoNexo() {
+  const area = document.getElementById("nexo-producao-real");
+  if (!area) return;
+
+  area.innerHTML = "<p>Carregando sabores...</p>";
+
+  try {
+    const { data: sabores, error } = await nexoSupabase
+      .from("nexo_flavors")
+      .select("id, name")
+      .eq("active", true)
+      .order("name", { ascending: true });
+
+    if (error) throw error;
+
+    if (!sabores || sabores.length === 0) {
+      area.innerHTML = "<p>Nenhum sabor ativo encontrado.</p>";
+      return;
+    }
+
+    const escapar = valor =>
+      String(valor ?? "").replace(/[&<>"']/g, c => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+      })[c]);
+
+    const hoje = new Date();
+    const dataHoje = [
+      hoje.getFullYear(),
+      String(hoje.getMonth() + 1).padStart(2, "0"),
+      String(hoje.getDate()).padStart(2, "0")
+    ].join("-");
+
+    area.innerHTML = `
+      <div class="panel">
+        <h3>Registrar produção</h3>
+
+        <form onsubmit="salvarProducaoNexo(event)">
+          <label>Sabor *</label>
+          <select name="flavor_id" required>
+            <option value="">Selecione o sabor</option>
+            ${sabores.map(sabor => `
+              <option value="${escapar(sabor.id)}">
+                ${escapar(sabor.name)}
+              </option>
+            `).join("")}
+          </select>
+
+          <label>Quantidade produzida (pacotes) *</label>
+          <input name="quantity" type="number"
+            min="0.01" step="0.01" required>
+
+          <label>Data da produção *</label>
+          <input name="production_date" type="date"
+            value="${dataHoje}" required>
+
+          <label>Observações</label>
+          <textarea name="notes" maxlength="500"
+            placeholder="Ex.: Produção do turno da manhã"></textarea>
+
+          <button class="primary" type="submit">
+            Salvar produção
+          </button>
+
+          <button type="button"
+            onclick="carregarProducaoNexo()">
+            Cancelar
+          </button>
+        </form>
+      </div>
+    `;
+  } catch (error) {
+    console.error("Erro ao carregar sabores:", error);
+    area.innerHTML =
+      '<div class="notice">Não foi possível carregar os sabores. Verifique as permissões do Supabase.</div>';
+  }
+}
+
