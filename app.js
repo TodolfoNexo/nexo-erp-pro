@@ -197,14 +197,23 @@ const views = {
 
   
 stock: ["Estoque", () => `
-  <div class="section-head">
-    <h2>Controle de estoque</h2>   
-<button class="primary"
-  onclick="abrirFormularioMovimentacaoEstoqueNexo()">
-  + Movimentar estoque
-</button>
+  
+<div class="section-head">
+  <h2>Controle de estoque</h2>
 
+  <div style="display:flex; gap:10px; flex-wrap:wrap;">
+    <button class="primary"
+      onclick="abrirFormularioProdutoNexo()">
+      + Novo produto
+    </button>
+
+    <button class="primary"
+      onclick="abrirFormularioMovimentacaoEstoqueNexo()">
+      + Movimentar estoque
+    </button>
   </div>
+</div>
+
 
   <div id="nexo-estoque-real">
     <p>Carregando estoque...</p>
