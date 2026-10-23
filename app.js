@@ -198,11 +198,12 @@ const views = {
   
 stock: ["Estoque", () => `
   <div class="section-head">
-    <h2>Controle de estoque</h2>
-    <button class="primary"
-      onclick="demoAlert('Movimentação de estoque será ativada no próximo passo.')">
-      + Movimentar estoque
-    </button>
+    <h2>Controle de estoque</h2>   
+<button class="primary"
+  onclick="abrirFormularioMovimentacaoEstoqueNexo()">
+  + Movimentar estoque
+</button>
+
   </div>
 
   <div id="nexo-estoque-real">
@@ -534,6 +535,80 @@ async function abrirFormularioMovimentacaoEstoqueNexo() {
   } catch (error) {
     console.error("Erro ao abrir movimentação:", error);
     alert("Não foi possível abrir o formulário: " + error.message);
+  }
+}
+
+
+async function salvarMovimentacaoEstoqueNexo(event) {
+  event.preventDefault();
+
+  const form = event.target;
+  const dados = new FormData(form);
+
+  const produtoId = String(dados.get("product_id") || "");
+  const tipo = String(dados.get("movement_type") || "");
+  const quantidade = Number(dados.get("quantity"));
+  const observacoes = String(dados.get("notes") || "").trim();
+
+  if (!produtoId || !["entrada", "saida"].includes(tipo)) {
+    alert("Selecione um produto e um tipo de movimentação válido.");
+    return;
+  }
+
+  if (!Number.isFinite(quantidade) || quantidade <= 0) {
+    alert("Informe uma quantidade maior que zero.");
+    return;
+  }
+
+  if (!nexoSupabase) {
+    alert("Conexão com o banco indisponível.");
+    return;
+  }
+
+  const { data: sessaoData, error: sessaoError } =
+    await nexoSupabase.auth.getSession();
+
+  if (sessaoError || !sessaoData.session) {
+    alert("Sua sessão expirou. Entre novamente no NEXO.");
+    return;
+  }
+
+  const botao = form.querySelector('button[type="submit"]');
+
+  if (botao) {
+    botao.disabled = true;
+    botao.textContent = "Registrando...";
+  }
+
+  try {
+    const { data: novoSaldo, error } = await nexoSupabase.rpc(
+      "nexo_movimentar_estoque",
+      {
+        p_product_id: produtoId,
+        p_movement_type: tipo,
+        p_quantity: quantidade,
+        p_notes: observacoes || null
+      }
+    );
+
+    if (error) throw error;
+
+    alert(
+      "Movimentação registrada com sucesso! Novo saldo: " +
+      Number(novoSaldo).toLocaleString("pt-BR")
+    );
+
+    await carregarEstoqueNexo();
+
+  } catch (error) {
+    console.error("Erro ao movimentar estoque:", error);
+
+    alert("Não foi possível movimentar o estoque: " + error.message);
+
+    if (botao) {
+      botao.disabled = false;
+      botao.textContent = "Registrar movimentação";
+    }
   }
 }
 
