@@ -1859,3 +1859,64 @@ async function abrirFormularioProducaoNexo() {
   }
 }
 
+
+async function salvarProducaoNexo(event) {
+  event.preventDefault();
+
+  const form = event.target;
+  const dados = new FormData(form);
+
+  const flavorId = String(dados.get("flavor_id") || "");
+  const quantity = Number(dados.get("quantity"));
+  const productionDate = String(
+    dados.get("production_date") || ""
+  );
+  const notes = String(dados.get("notes") || "").trim();
+
+  if (!flavorId) {
+    alert("Selecione um sabor.");
+    return;
+  }
+
+  if (!Number.isFinite(quantity) || quantity <= 0) {
+    alert("Informe uma quantidade válida.");
+    return;
+  }
+
+  if (!productionDate) {
+    alert("Informe a data da produção.");
+    return;
+  }
+
+  const botao = form.querySelector('button[type="submit"]');
+  if (botao) botao.disabled = true;
+
+  try {
+    const registro = {
+      flavor_id: flavorId,
+      quantity: quantity,
+      production_date: productionDate,
+      notes: notes || null
+    };
+
+    const { error } = await nexoSupabase
+      .from("nexo_production")
+      .insert([registro]);
+
+    if (error) throw error;
+
+    alert("Produção registrada com sucesso!");
+
+    await carregarProducaoNexo();
+  } catch (error) {
+    console.error("Erro ao salvar produção:", error);
+
+    alert(
+      "Erro ao registrar produção: " +
+      (error.message || "verifique as permissões do Supabase.")
+    );
+
+    if (botao) botao.disabled = false;
+  }
+}
+
