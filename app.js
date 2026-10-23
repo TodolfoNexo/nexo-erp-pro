@@ -307,6 +307,12 @@ function render(view) {
   }
 }
 
+
+   if (view === "production") {
+      carregarProducaoNexo();
+}
+
+
 document.querySelectorAll(".nav-item").forEach(button => {
   button.addEventListener("click", () => render(button.dataset.view));
 });
