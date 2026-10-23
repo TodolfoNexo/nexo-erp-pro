@@ -1920,3 +1920,115 @@ async function salvarProducaoNexo(event) {
   }
 }
 
+
+async function carregarProducaoNexo() {
+  const area = document.getElementById("nexo-producao-real");
+  if (!area) return;
+
+  area.innerHTML = "<p>Carregando produção...</p>";
+
+  try {
+    const { data: producoes, error: erroProducao } =
+      await nexoSupabase
+        .from("nexo_production")
+        .select("id, flavor_id, quantity, production_date, notes")
+        .order("production_date", { ascending: false });
+
+    if (erroProducao) throw erroProducao;
+
+    const { data: sabores, error: erroSabores } =
+      await nexoSupabase
+        .from("nexo_flavors")
+        .select("id, name");
+
+    if (erroSabores) throw erroSabores;
+
+    const nomesSabores = {};
+    (sabores || []).forEach(sabor => {
+      nomesSabores[sabor.id] = sabor.name;
+    });
+
+    const hoje = new Date();
+    const dataHoje = [
+      hoje.getFullYear(),
+      String(hoje.getMonth() + 1).padStart(2, "0"),
+      String(hoje.getDate()).padStart(2, "0")
+    ].join("-");
+
+    const producoesHoje = (producoes || []).filter(
+      item => item.production_date === dataHoje
+    );
+
+    const totalHoje = producoesHoje.reduce(
+      (total, item) => total + Number(item.quantity || 0),
+      0
+    );
+
+    const escapar = valor =>
+      String(valor ?? "").replace(/[&<>"']/g, c => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+      })[c]);
+
+    const linhas = (producoes || []).map(item => {
+      const dataFormatada = item.production_date
+        ? item.production_date.split("-").reverse().join("/")
+        : "—";
+
+      return `
+        <tr>
+          <td>${escapar(nomesSabores[item.flavor_id] || "Sabor não encontrado")}</td>
+          <td>${Number(item.quantity).toLocaleString("pt-BR")}</td>
+          <td>${dataFormatada}</td>
+          <td>${escapar(item.notes || "—")}</td>
+        </tr>
+      `;
+    }).join("");
+
+    area.innerHTML = `
+      <div class="cards">
+        <div class="card">
+          <span>Registros de produção</span>
+          <strong>${(producoes || []).length}</strong>
+        </div>
+        <div class="card">
+          <span>Pacotes produzidos hoje</span>
+          <strong>${totalHoje.toLocaleString("pt-BR")}</strong>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3>Histórico de produção</h3>
+        ${
+          linhas
+            ? `<div style="overflow-x:auto;">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Sabor</th>
+                      <th>Quantidade</th>
+                      <th>Data</th>
+                      <th>Observações</th>
+                    </tr>
+                  </thead>
+                  <tbody>${linhas}</tbody>
+                </table>
+              </div>`
+            : "<p>Nenhuma produção registrada ainda.</p>"
+        }
+      </div>
+    `;
+  } catch (error) {
+    console.error("Erro ao carregar produção:", error);
+    area.innerHTML = `
+      <div class="notice">
+        Não foi possível carregar a produção:
+        ${String(error.message || "verifique as permissões do Supabase")}
+      </div>
+    `;
+  }
+}
+
