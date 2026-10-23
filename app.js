@@ -1885,8 +1885,12 @@ async function salvarProducaoNexo(event) {
     return;
   }
 
-  if (!Number.isFinite(quantity) || quantity <= 0) {
-    alert("Informe uma quantidade válida.");
+  if (
+    !Number.isFinite(quantity) ||
+    quantity <= 0 ||
+    !Number.isInteger(quantity)
+  ) {
+    alert("Informe uma quantidade inteira de unidades.");
     return;
   }
 
@@ -1895,26 +1899,40 @@ async function salvarProducaoNexo(event) {
     return;
   }
 
+  if (!nexoSupabase) {
+    alert("Conexão com o banco indisponível.");
+    return;
+  }
+
   const botao = form.querySelector('button[type="submit"]');
-  if (botao) botao.disabled = true;
+
+  if (botao) {
+    botao.disabled = true;
+    botao.textContent = "Registrando...";
+  }
 
   try {
-    const registro = {
-      flavor_id: flavorId,
-      quantity: quantity,
-      production_date: productionDate,
-      notes: notes || null
-    };
-
-    const { error } = await nexoSupabase
-      .from("nexo_production")
-      .insert([registro]);
+    const { data: novoSaldo, error } = await nexoSupabase.rpc(
+      "nexo_registrar_producao",
+      {
+        p_flavor_id: flavorId,
+        p_quantity: quantity,
+        p_production_date: productionDate,
+        p_notes: notes || null
+      }
+    );
 
     if (error) throw error;
 
-    alert("Produção registrada com sucesso!");
+    alert(
+      "Produção registrada e estoque atualizado! Novo saldo: " +
+      Number(novoSaldo).toLocaleString("pt-BR") +
+      " unidades."
+    );
 
     await carregarProducaoNexo();
+    await carregarEstoqueNexo();
+
   } catch (error) {
     console.error("Erro ao salvar produção:", error);
 
@@ -1923,9 +1941,14 @@ async function salvarProducaoNexo(event) {
       (error.message || "verifique as permissões do Supabase.")
     );
 
-    if (botao) botao.disabled = false;
+    if (botao) {
+      botao.disabled = false;
+      botao.textContent = "Registrar produção";
+    }
   }
 }
+
+
 
 
 async function carregarProducaoNexo() {
