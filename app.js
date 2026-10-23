@@ -1657,4 +1657,124 @@ async function salvarFinanceiroNexo(event) {
 }
 
 
+async function abrirFormularioProdutoNexo() {
+  const area = document.getElementById("nexo-estoque-real");
+  if (!area) return;
+
+  area.innerHTML = `
+    <div class="panel">
+      <h3>Cadastrar novo produto</h3>
+
+      <form onsubmit="salvarProdutoNexo(event)">
+        <label>Nome do produto *</label>
+        <input name="name" maxlength="120"
+          placeholder="Ex.: Gelo sabor coco"
+          required>
+
+        <label>Categoria</label>
+        <input name="category" maxlength="80"
+          placeholder="Ex.: Gelo saborizado, embalagem, insumo">
+
+        <label>Unidade de medida *</label>
+        <select name="unit" required>
+          <option value="pacotes">Pacotes</option>
+          <option value="unidades">Unidades</option>
+          <option value="kg">Kg</option>
+          <option value="litros">Litros</option>
+        </select>
+
+        <label>Estoque inicial</label>
+        <input name="current_stock" type="number"
+          min="0" step="0.01" value="0" required>
+
+        <label>Estoque mínimo</label>
+        <input name="minimum_stock" type="number"
+          min="0" step="0.01" value="0" required>
+
+        <label>Custo por unidade (R$)</label>
+        <input name="cost_price" type="number"
+          min="0" step="0.01" value="0" required>
+
+        <label>Preço de venda (R$)</label>
+        <input name="sale_price" type="number"
+          min="0" step="0.01" value="0" required>
+
+        <button class="primary" type="submit">
+          Salvar produto
+        </button>
+
+        <button type="button"
+          onclick="carregarEstoqueNexo()">
+          Cancelar
+        </button>
+      </form>
+    </div>
+  `;
+}
+
+async function salvarProdutoNexo(event) {
+  event.preventDefault();
+
+  const form = event.target;
+  const dados = new FormData(form);
+
+  const nome = String(dados.get("name") || "").trim();
+
+  const camposNumericos = [
+    "current_stock",
+    "minimum_stock",
+    "cost_price",
+    "sale_price"
+  ];
+
+  const valores = {};
+
+  for (const campo of camposNumericos) {
+    const valor = Number(dados.get(campo));
+
+    if (!Number.isFinite(valor) || valor < 0) {
+      alert("Confira os valores numéricos informados.");
+      return;
+    }
+
+    valores[campo] = valor;
+  }
+
+  if (!nome) {
+    alert("Informe o nome do produto.");
+    return;
+  }
+
+  const produto = {
+    name: nome,
+    category: String(dados.get("category") || "").trim() || null,
+    unit: String(dados.get("unit") || "pacotes"),
+    ...valores
+  };
+
+  const botao = form.querySelector('button[type="submit"]');
+  if (botao) botao.disabled = true;
+
+  try {
+    const { error } = await nexoSupabase
+      .from("nexo_products")
+      .insert([produto]);
+
+    if (error) throw error;
+
+    alert("Produto cadastrado com sucesso!");
+
+    await carregarEstoqueNexo();
+  } catch (error) {
+    console.error("Erro ao cadastrar produto:", error);
+
+    alert(
+      "Não foi possível cadastrar o produto: " +
+      (error.message || "verifique as permissões do Supabase.")
+    );
+
+    if (botao) botao.disabled = false;
+  }
+}
+
 
