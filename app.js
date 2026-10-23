@@ -887,35 +887,46 @@ async function nexoStartAuth() {
 
 nexoStartAuth();
 
+
 async function abrirFormularioVenda() {
   const area = document.getElementById("nexo-vendas-reais");
   if (!area) return;
 
-  area.innerHTML = "<p>Carregando clientes...</p>";
+  area.innerHTML = "<p>Carregando clientes e sabores...</p>";
 
-  const { data: clientes, error } = await nexoSupabase
-    .from("nexo_customers")
-    .select("id, name")
-    .order("name");
+  const [{ data: clientes, error: erroClientes },
+         { data: sabores, error: erroSabores }] = await Promise.all([
+    nexoSupabase.from("nexo_customers")
+      .select("id, name").order("name"),
+    nexoSupabase.from("nexo_flavors")
+      .select("id, name, active")
+      .eq("active", true)
+      .order("name")
+  ]);
 
-  if (error) {
-    console.error("Erro ao carregar clientes:", error);
+  if (erroClientes || erroSabores) {
+    console.error(erroClientes || erroSabores);
     area.innerHTML =
-      '<div class="notice">Não foi possível carregar os clientes.</div>';
+      '<div class="notice">Não foi possível carregar clientes e sabores.</div>';
     return;
   }
 
-  if (!clientes || clientes.length === 0) {
-    area.innerHTML = `
-      <div class="notice">
-        Cadastre um cliente antes de criar uma venda.
-      </div>
-      <button class="primary" onclick="carregarVendasNexo()">
-        Voltar para vendas
-      </button>
-    `;
+  if (!clientes?.length) {
+    area.innerHTML =
+      '<div class="notice">Cadastre um cliente antes de criar uma venda.</div>';
     return;
   }
+
+  if (!sabores?.length) {
+    area.innerHTML =
+      '<div class="notice">Nenhum sabor ativo foi encontrado.</div>';
+    return;
+  }
+
+  const escapar = valor => String(valor ?? "").replace(/[&<>"']/g, c => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;",
+    '"': "&quot;", "'": "&#39;"
+  })[c]);
 
   area.innerHTML = `
     <div class="section-head">
@@ -923,50 +934,137 @@ async function abrirFormularioVenda() {
     </div>
 
     <form id="form-nova-venda">
-      <label for="venda-cliente">Cliente</label>
+      <label for="venda-cliente">Cliente *</label>
       <select id="venda-cliente" required>
         <option value="">Selecione um cliente</option>
-        ${clientes.map(cliente => `
-          <option value="${String(cliente.id).replace(/&/g, "&amp;").replace(/"/g, "&quot;")}">
-            ${String(cliente.name || "").replace(/[&<>"']/g, c => ({
-              "&": "&amp;", "<": "&lt;", ">": "&gt;",
-              '"': "&quot;", "'": "&#39;"
-            })[c])}
-          </option>
-        `).join("")}
+        ${clientes.map(c =>
+          `<option value="${escapar(c.id)}">${escapar(c.name)}</option>`
+        ).join("")}
       </select>
 
-      <label for="venda-data">Data da venda</label>
+      <label for="venda-data">Data da venda *</label>
       <input id="venda-data" type="date"
         value="${new Date().toLocaleDateString("en-CA")}" required>
 
-      <label for="venda-valor">Valor total (R$)</label>
-      <input id="venda-valor" type="number"
-        min="0.01" step="0.01" placeholder="0,00" required>
+      <h3>Itens do pedido</h3>
+      <p>1 pacote = 50 gelos individuais.</p>
 
-      <label for="venda-status">Status</label>
-      <select id="venda-status" required>
-        <option value="Pendente">Pendente</option>
-        <option value="Pago">Pago</option>
-        <option value="Cancelado">Cancelado</option>
-      </select>
+      <div id="venda-itens"></div>
 
-      <label for="venda-observacoes">Observações</label>
-      <textarea id="venda-observacoes"
-        placeholder="Observações do pedido"></textarea>
-
-      <button class="primary" type="submit">Salvar venda</button>
-      <button type="button" onclick="carregarVendasNexo()">
-        Cancelar
+      <button type="button" id="venda-adicionar-item">
+        + Adicionar sabor
       </button>
 
-      <p id="venda-mensagem" role="status"></p>
+      <div style="margin-top:16px">
+        <label for="venda-status">Status *</label>
+        <select id="venda-status" required>
+          <option value="Pendente">Pendente</option>
+          <option value="Pago">Pago</option>
+        </select>
+
+        <label for="venda-observacoes">Observações</label>
+        <textarea id="venda-observacoes"
+          placeholder="Observações do pedido"></textarea>
+
+        <h3>Total: <span id="venda-total">R$ 0,00</span></h3>
+
+        <button class="primary" type="submit">Registrar venda</button>
+        <button type="button" onclick="carregarVendasNexo()">
+          Cancelar
+        </button>
+
+        <p id="venda-mensagem" role="status"></p>
+      </div>
     </form>
   `;
 
-  document.getElementById("form-nova-venda")
-    .addEventListener("submit", salvarVendaNexo);
+  const form = document.getElementById("form-nova-venda");
+  const itensArea = document.getElementById("venda-itens");
+
+  function adicionarItem() {
+    const linha = document.createElement("div");
+    linha.className = "venda-item";
+    linha.style.cssText =
+      "border:1px solid #555;border-radius:8px;padding:12px;margin:12px 0";
+
+    linha.innerHTML = `
+      <label>Sabor *</label>
+      <select name="flavor_id" required>
+        <option value="">Selecione o sabor</option>
+        ${sabores.map(s =>
+          `<option value="${escapar(s.id)}">${escapar(s.name)}</option>`
+        ).join("")}
+      </select>
+
+      <label>Quantidade de pacotes *</label>
+      <input name="quantity" type="number" min="1" step="1"
+        value="1" required>
+
+      <label>Preço por pacote (R$) *</label>
+      <input name="unit_price" type="number" min="0.01"
+        step="0.01" value="40.00" required>
+
+      <p>Subtotal: <strong class="venda-subtotal">R$ 40,00</strong></p>
+
+      <button type="button" class="venda-remover-item">
+        Remover sabor
+      </button>
+    `;
+
+    itensArea.appendChild(linha);
+
+    linha.querySelectorAll("input, select").forEach(campo => {
+      campo.addEventListener("input", atualizarTotal);
+      campo.addEventListener("change", atualizarTotal);
+    });
+
+    linha.querySelector(".venda-remover-item")
+      .addEventListener("click", () => {
+        linha.remove();
+        atualizarTotal();
+      });
+
+    atualizarTotal();
+  }
+
+  function atualizarTotal() {
+    let total = 0;
+
+    itensArea.querySelectorAll(".venda-item").forEach(linha => {
+      const quantidade = Number(
+        linha.querySelector('[name="quantity"]').value
+      );
+      const preco = Number(
+        linha.querySelector('[name="unit_price"]').value
+      );
+
+      const subtotal =
+        Number.isInteger(quantidade) && quantidade > 0 &&
+        Number.isFinite(preco) && preco > 0
+          ? Math.round(quantidade * preco * 100) / 100
+          : 0;
+
+      total += subtotal;
+      linha.querySelector(".venda-subtotal").textContent =
+        subtotal.toLocaleString("pt-BR", {
+          style: "currency", currency: "BRL"
+        });
+    });
+
+    document.getElementById("venda-total").textContent =
+      total.toLocaleString("pt-BR", {
+        style: "currency", currency: "BRL"
+      });
+  }
+
+  document.getElementById("venda-adicionar-item")
+    .addEventListener("click", adicionarItem);
+
+  form.addEventListener("submit", salvarVendaNexo);
+
+  adicionarItem();
 }
+
 
 
 async function salvarVendaNexo(event) {
