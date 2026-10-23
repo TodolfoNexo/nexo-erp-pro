@@ -175,8 +175,6 @@ const views = {
     </div>
   `],
 
-
-  production: ["Produção", () => `
   
 production: ["Produção", () => `
   <div class="section-head">
