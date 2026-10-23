@@ -305,7 +305,6 @@ function render(view) {
   }
 }
 
-
    if (view === "production") {
       carregarProducaoNexo();
 }
