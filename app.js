@@ -392,6 +392,74 @@ async function carregarVendasNexo() {
 }
 
 
+async function carregarEstoqueNexo() {
+  const area = document.getElementById("nexo-estoque-real");
+  if (!area) return;
+
+  area.innerHTML = "<p>Carregando estoque...</p>";
+
+  try {
+    const { data: produtos, error } = await nexoSupabase
+      .from("nexo_products")
+      .select("id, name, category, unit, current_stock, minimum_stock, cost_price, sale_price")
+      .order("name", { ascending: true });
+
+    if (error) throw error;
+
+    if (!produtos || produtos.length === 0) {
+      area.innerHTML = "<p>Nenhum produto cadastrado.</p>";
+      return;
+    }
+
+    const escapar = valor =>
+      String(valor ?? "").replace(/[&<>"']/g, caractere => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+      })[caractere]);
+
+    area.innerHTML = `
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>PRODUTO</th>
+              <th>CATEGORIA</th>
+              <th>ESTOQUE ATUAL</th>
+              <th>ESTOQUE MÍNIMO</th>
+              <th>STATUS</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${produtos.map(produto => {
+              const atual = Number(produto.current_stock || 0);
+              const minimo = Number(produto.minimum_stock || 0);
+              const baixo = atual <= minimo;
+
+              return `
+                <tr>
+                  <td>${escapar(produto.name)}</td>
+                  <td>${escapar(produto.category || "-")}</td>
+                  <td>${escapar(atual)} ${escapar(produto.unit || "")}</td>
+                  <td>${escapar(minimo)} ${escapar(produto.unit || "")}</td>
+                  <td>${baixo ? "Estoque baixo" : "Normal"}</td>
+                </tr>
+              `;
+            }).join("")}
+          </tbody>
+        </table>
+      </div>
+    `;
+  } catch (error) {
+    console.error("Erro ao carregar estoque:", error);
+    area.innerHTML =
+      '<div class="notice">Não foi possível carregar o estoque. Verifique as permissões do Supabase.</div>';
+  }
+}
+
+
 /* ==========================================
    AUTENTICAÇÃO
    ========================================== */
