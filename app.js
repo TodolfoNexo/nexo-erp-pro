@@ -195,22 +195,21 @@ const views = {
     )}
   `],
 
-  stock: ["Estoque", () => `
-    <div class="section-head">
-      <h2>Controle de estoque</h2>
-      <button class="primary" onclick="demoAlert('Movimentação real ainda não ativada.')">
-        + Movimentar estoque
-      </button>
-    </div>
-    ${table(
-      ["PRODUTO", "SALDO ILUSTRATIVO", "UNIDADE"],
-      data.flavors.map(f => [
-        f[0],
-        f[2].split(" ")[0],
-        "pacotes"
-      ])
-    )}
-  `],
+  
+stock: ["Estoque", () => `
+  <div class="section-head">
+    <h2>Controle de estoque</h2>
+    <button class="primary"
+      onclick="demoAlert('Movimentação de estoque será ativada no próximo passo.')">
+      + Movimentar estoque
+    </button>
+  </div>
+
+  <div id="nexo-estoque-real">
+    <p>Carregando estoque...</p>
+  </div>
+`],
+
 
 
 finance: ["Financeiro", () => `
@@ -290,6 +289,10 @@ function render(view) {
   if (view === "customers") {
     carregarClientesNexo();
   }
+
+   if (view === "stock") {
+  carregarEstoqueNexo();
+}
 
   if (view === "finance") {
     carregarFinanceiroNexo();
