@@ -984,9 +984,12 @@ async function abrirFormularioVenda() {
   function adicionarItem() {
     const linha = document.createElement("div");
     linha.className = "venda-item";
-    linha.style.cssText =
-      "border:1px solid #555;border-radius:8px;padding:12px;margin:12px 0";
-
+    
+     linha.style.cssText =
+  "display:flex;flex-direction:column;gap:10px;" +
+  "border:1px solid #555;border-radius:10px;" +
+  "padding:16px;margin:14px 0;width:100%;" +
+  "box-sizing:border-box;";
     linha.innerHTML = `
       <label>Sabor *</label>
       <select name="flavor_id" required>
